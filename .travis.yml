@@ -11,6 +11,7 @@ script:
 env:
   matrix:
     - CI_TEST: "unit"
+    - CI_TEST: "slow"
     - CI_TEST: "scalafmt"
 
 cache:

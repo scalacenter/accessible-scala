@@ -9,6 +9,10 @@ case "$TEST" in
   "scalafmt" )
     "$HERE/scalafmt" --test
     ;;
+
+  "slow" )
+    sbt "slow/test"
+    ;;
  
   "unit" )
     sbt ";clean;coverage;unit/test;coverageReport"
