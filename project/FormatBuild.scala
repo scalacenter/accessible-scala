@@ -18,7 +18,25 @@ object FormatBuild extends AutoPlugin {
       "-Ywarn-unused:locals",
       "-Ywarn-unused:privates"
     ),
-    testFrameworks += new TestFramework("utest.runner.Framework")
+    testFrameworks += new TestFramework("utest.runner.Framework"),
+
+    licenses := Seq(
+      "Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
+    ),
+    developers := List(
+      Developer(
+        "MasseGuillaume",
+        "Guillaume Massé",
+        "masgui@gmail.com",
+        url("https://github.com/MasseGuillaume")
+      )
+    ),
+    scmInfo in ThisBuild := Some(
+      ScmInfo(
+        url("https://github.com/scalacenter/accessible-scala"),
+        s"scm:git:git@github.com:scalacenter/accessible-scala.git"
+      )
+    )
   )
 
 }
