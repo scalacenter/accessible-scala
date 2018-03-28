@@ -1,11 +1,19 @@
 lazy val metaV = "3.6.0"
 
-lazy val accesibleScala = project
-  .in(file("accessible"))
+lazy val cli = project
+  .in(file("cli"))
   .settings(
-    moduleName := "accesible-scala",
-    assemblyJarName in assembly := "as.jar",
+    moduleName := "accessible-scala",
     mainClass.in(assembly) := Some("ch.epfl.scala.accessible.Main"),
+    assemblyOutputPath in assembly :=
+      (baseDirectory in ThisBuild).value /
+        "plugins" / "sublime-text" / "accessible-scala" / "ascala.jar"
+  )
+  .dependsOn(lib)
+
+lazy val lib = project
+  .in(file("lib"))
+  .settings(
     libraryDependencies ++= List(
       "com.lihaoyi" %% "pprint" % "0.5.2", // for debugging
       "org.scalameta" %% "scalameta" % metaV,
@@ -21,7 +29,7 @@ lazy val testsShared = project
       "org.scalameta" %% "testkit" % metaV
     )
   )
-  .dependsOn(accesibleScala)
+  .dependsOn(lib)
 
 lazy val unit = project
   .in(file("tests/unit"))

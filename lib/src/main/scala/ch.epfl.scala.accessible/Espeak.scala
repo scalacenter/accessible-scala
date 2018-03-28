@@ -1,6 +1,6 @@
 package ch.epfl.scala.accessible
 
-import java.lang.{Process, ProcessBuilder}
+import java.lang.ProcessBuilder
 import java.lang.ProcessBuilder.Redirect
 import java.io.File
 
@@ -12,7 +12,8 @@ object Espeak {
 
     val pb = new ProcessBuilder(all: _*)
     pb.redirectErrorStream(true)
-    pb.redirectOutput(Redirect.appendTo(new File("espeak.log")))
+    pb.redirectOutput(ProcessBuilder.Redirect.INHERIT)
+
     val process = pb.start()
     process.waitFor()
   }
@@ -24,7 +25,7 @@ case class EspeakConfig(
     // -g
     wordGaps: Int = 10, // ms
     // -s
-    wordsPerMinute: Int = 175
+    wordsPerMinute: Int = 250
 ) {
   def toList: List[String] = {
     List(
