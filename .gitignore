@@ -3,3 +3,4 @@ bin/.coursier
 bin/.scalafmt*
 tests/slow/repos.tar.gz
 tests/slow/espeak.log
+plugins/sublime-text/accessible-scala/ascala.jar
