@@ -15,15 +15,22 @@ object SummaryIntegrationTests extends TestSuite {
       .groupBy(input => input.repo + input.filename)
       .mapValues(_.head)
 
-  def getSummary(path: String): String = {
-    getSummary(corpusByFile(path))
+  def getSummary(path: String): String =
+    getSummary(path, None)
+
+  def getSummary(path: String, position: Option[Position]): String = {
+    getSummary(corpusByFile(path), position)
   }
 
   def getSummary(file: CorpusFile): String = {
-    getTree(file).map(Summary(_)).getOrElse("--cannot parse--")
+    getSummary(file, None)
   }
 
-  def getTree(file: CorpusFile): Option[Tree] = {
+  def getSummary(file: CorpusFile, position: Option[Position]): String = {
+    getTree(file).map(f => Summary(f, position)).getOrElse("--cannot parse--")
+  }
+
+  def getTree(file: CorpusFile): Option[Source] = {
     val text =
       new String(Files.readAllBytes(file.jFile.toPath), StandardCharsets.UTF_8)
     val input = Input.String(text)
@@ -31,7 +38,7 @@ object SummaryIntegrationTests extends TestSuite {
   }
 
   val tests = Tests {
-    'summary - {
+    "top level summary" - {
       val path = "akka/akka-actor/src/main/scala/akka/actor/AbstractActor.scala"
       val obtained = getSummary(path)
       val expected =
@@ -42,6 +49,59 @@ object SummaryIntegrationTests extends TestSuite {
            |class AbstractActorWithStash,
            |class AbstractActorWithUnboundedStash,
            |class AbstractActorWithUnrestrictedStash.""".stripMargin
+      assert(obtained == expected)
+    }
+
+    "class summary" - {
+      val path = "spire/core/shared/src/main/scala/spire/math/Algebraic.scala"
+
+      val tree = getTree(corpusByFile(path)).get
+      val position: Position =
+        tree.stats match {
+          case List(Pkg(_, List(Pkg(_, stats)))) => 
+            stats.find{
+              case Defn.Object(_, Term.Name("Algebraic"), _) => true
+              case _ => false
+            }.get.pos
+          case _ => ???
+        }
+
+      val obtained = getSummary(path, Some(position))
+      val expected = 
+        """|object Algebraic: 
+           |val Zero,
+           |val One,
+           |def apply,
+           |def apply,
+           |def apply,
+           |def apply,
+           |def apply,
+           |def apply,
+           |def apply,
+           |def root,
+           |def roots,
+           |def unsafeRoot,
+           |def apply,
+           |class Expr,
+           |object Expr,
+           |class BitBound,
+           |object BitBound,
+           |def nrootApprox,
+           |def nroot,
+           |val bits2dec,
+           |def nroot,
+           |def nroot,
+           |val JBigDecimalOrder,
+           |def roundExact,
+           |def roundPositive,
+           |val MaxIntValue,
+           |val MinIntValue,
+           |val MaxLongValue,
+           |val MinLongValue,
+           |class ZeroBoundFunction,
+           |object LiYap,
+           |object BFMSS.""".stripMargin
+
       assert(obtained == expected)
     }
   }
