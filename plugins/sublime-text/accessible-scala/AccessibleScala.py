@@ -36,11 +36,11 @@ class AccessibleScalaHandler(sublime_plugin.EventListener):
       file = view.file_name()
       if file:
         moved = "move " + start + " " + end + " " + file + "\n"
-        self.transport.send(moved)
+        # self.transport.send(moved)
 
   def on_activated_async(self, view):
     file = view.file_name()
-    self.transport.send("open " + file + "\n")
+    # self.transport.send("open " + file + "\n")
 
 class StdioTransport():
     def __init__(self, process):
