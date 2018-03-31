@@ -60,16 +60,19 @@ object SummaryIntegrationTests extends TestSuite with DiffAssertions {
       val tree = getTree(corpusByFile(path)).get
       val position =
         tree.stats match {
-          case List(Pkg(_, List(Pkg(_, stats)))) => 
-            stats.find{
-              case Defn.Object(_, Term.Name("Algebraic"), _) => true
-              case _ => false
-            }.get.pos
+          case List(Pkg(_, List(Pkg(_, stats)))) =>
+            stats
+              .find {
+                case Defn.Object(_, Term.Name("Algebraic"), _) => true
+                case _                                         => false
+              }
+              .get
+              .pos
           case _ => ???
         }
 
       val obtained = getSummary(path, Some(Offset(position.start)))
-      val expected = 
+      val expected =
         """|object Algebraic: 
            |val Zero,
            |val One,
