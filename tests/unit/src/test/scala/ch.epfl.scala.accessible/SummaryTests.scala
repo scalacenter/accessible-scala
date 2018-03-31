@@ -2,8 +2,9 @@ package ch.epfl.scala.accessible
 
 import utest._
 import scala.meta._
+import scala.meta.testkit.DiffAssertions
 
-object SummaryTests extends TestSuite {
+object SummaryTests extends TestSuite with DiffAssertions {
 
   val tests = Tests {
     "top level summary" - {
@@ -50,13 +51,13 @@ object SummaryTests extends TestSuite {
   def check(source: String, expected: String): Unit = {
     val tree = source.parse[Source].get
     val obtained = Summary(tree)
-    assert(obtained == expected)
+    assertNoDiff(obtained, expected)
   }
 
   def checkDefinition(source: String, expected: String): Unit = {
     val tree = source.parse[Source].get
-    val pos = tree.stats.head.pos
-    val obtained = Summary(tree, Some(pos))
-    assert(obtained == expected)
+    val pos = tree.stats.head.pos.start
+    val obtained = Summary(tree, Some(Offset(pos)))
+    assertNoDiff(obtained, expected)
   }
 }

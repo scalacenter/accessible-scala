@@ -5,20 +5,22 @@ import scala.meta._
 import java.nio.file.{Files, Path}
 import java.nio.charset.StandardCharsets
 
+case class Offset(value: Int)
+
 object Summary {
 
   def apply(tree: Tree): String =
     visitNames(tree, None)
 
-  def apply(tree: Tree, position: Option[Position]): String =
-    visitNames(tree, position)
+  def apply(tree: Tree, offset: Option[Offset]): String =
+    visitNames(tree, offset)
 
   def apply(path: Path): String = apply(path, None)
 
-  def apply(path: Path, position: Option[Position]): String = {
+  def apply(path: Path, offset: Option[Offset]): String = {
     val text = new String(Files.readAllBytes(path), StandardCharsets.UTF_8)
     val input = Input.String(text)
-    apply(input.parse[Source].get, position)
+    apply(input.parse[Source].get, offset)
   }
 
   private val nl = "\n"
@@ -32,10 +34,10 @@ object Summary {
     stats.map(fun).filter(_.nonEmpty).mkString("", "," + nl, ends)
   }
 
-  private def visitNames(tree: Tree, position: Option[Position]): String = {
-    position match {
-      case Some(pos) => 
-        findPosition(tree, pos) match {
+  private def visitNames(tree: Tree, offset: Option[Offset]): String = {
+    offset match {
+      case Some(x) => 
+        findPosition(tree, x) match {
           case Some(subtree) => {
             childrens(subtree)
           }
@@ -45,14 +47,13 @@ object Summary {
     }
   }
 
-  private def findPosition(tree: Tree, position: Position): Option[Tree] = {
+  private def findPosition(tree: Tree, offset: Offset): Option[Tree] = {
     var found: Option[Tree] = None
     object findPos extends Traverser {
       override def apply(tree: Tree): Unit = {
-        if(tree.pos.start == position.start &&
-           tree.pos.end == position.end) {
+        if(tree.pos.start <= offset.value &&
+           offset.value <= tree.pos.end) {
           found = Some(tree)
-        } else {
           super.apply(tree)
         }
       }

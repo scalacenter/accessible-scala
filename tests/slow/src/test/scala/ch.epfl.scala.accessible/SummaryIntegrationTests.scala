@@ -6,9 +6,11 @@ import scala.meta.testkit.{Corpus, CorpusFile}
 import java.nio.file.Files
 import java.nio.charset.StandardCharsets
 
+import scala.meta.testkit.DiffAssertions
+
 import utest._
 
-object SummaryIntegrationTests extends TestSuite {
+object SummaryIntegrationTests extends TestSuite with DiffAssertions {
   val corpus = Corpus.files(Corpus.fastparse)
   val corpusByFile =
     corpus.toList
@@ -18,16 +20,16 @@ object SummaryIntegrationTests extends TestSuite {
   def getSummary(path: String): String =
     getSummary(path, None)
 
-  def getSummary(path: String, position: Option[Position]): String = {
-    getSummary(corpusByFile(path), position)
+  def getSummary(path: String, offset: Option[Offset]): String = {
+    getSummary(corpusByFile(path), offset)
   }
 
   def getSummary(file: CorpusFile): String = {
     getSummary(file, None)
   }
 
-  def getSummary(file: CorpusFile, position: Option[Position]): String = {
-    getTree(file).map(f => Summary(f, position)).getOrElse("--cannot parse--")
+  def getSummary(file: CorpusFile, offset: Option[Offset]): String = {
+    getTree(file).map(f => Summary(f, offset)).getOrElse("--cannot parse--")
   }
 
   def getTree(file: CorpusFile): Option[Source] = {
@@ -49,14 +51,14 @@ object SummaryIntegrationTests extends TestSuite {
            |class AbstractActorWithStash,
            |class AbstractActorWithUnboundedStash,
            |class AbstractActorWithUnrestrictedStash.""".stripMargin
-      assert(obtained == expected)
+      assertNoDiff(obtained, expected)
     }
 
     "class summary" - {
       val path = "spire/core/shared/src/main/scala/spire/math/Algebraic.scala"
 
       val tree = getTree(corpusByFile(path)).get
-      val position: Position =
+      val position =
         tree.stats match {
           case List(Pkg(_, List(Pkg(_, stats)))) => 
             stats.find{
@@ -66,7 +68,7 @@ object SummaryIntegrationTests extends TestSuite {
           case _ => ???
         }
 
-      val obtained = getSummary(path, Some(position))
+      val obtained = getSummary(path, Some(Offset(position.start)))
       val expected = 
         """|object Algebraic: 
            |val Zero,
@@ -102,7 +104,7 @@ object SummaryIntegrationTests extends TestSuite {
            |object LiYap,
            |object BFMSS.""".stripMargin
 
-      assert(obtained == expected)
+      assertNoDiff(obtained, expected)
     }
   }
 }
