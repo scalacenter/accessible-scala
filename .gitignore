@@ -3,3 +3,5 @@ bin/.coursier
 bin/.scalafmt*
 tests/slow/repos.tar.gz
 plugins/sublime-text/accessible-scala/ascala.jar
+plugins/sublime-text/accessible-scala/bin
+plugins/sublime-text/accessible-scala/build
