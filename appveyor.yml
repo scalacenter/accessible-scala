@@ -13,6 +13,7 @@ install:
   - ps: iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
   - ps: scoop bucket add versions
   - ps: scoop install sbt0.13
+  - copy c:\MinGW\bin\mingw32-make.exe c:\MinGW\bin\make.exe
 
 build_script:
   - sbt compile
