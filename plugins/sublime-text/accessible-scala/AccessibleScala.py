@@ -9,7 +9,9 @@ import os
 class AccessibleScalaHandler(sublime_plugin.EventListener):
   def __init__(self):
     here = os.path.dirname(os.path.realpath(__file__))
-    cmd = ["java", "-jar", "ascala.jar"]
+    options = "-Djava.library.path=" + os.environ['ESPEAK_LIB_PATH'] + ":" + here + "/bin"
+    cmd = ["java", options, "-jar", "ascala.jar"]
+
     process = subprocess.Popen(cmd,
                                cwd=here,
                                universal_newlines=True,
@@ -22,6 +24,7 @@ class AccessibleScalaHandler(sublime_plugin.EventListener):
     self.transport.start(self.receive_payload)
 
   def __del__(self):
+    print("done")
     self.process.terminate()
 
   def receive_payload(self, message):
@@ -34,7 +37,7 @@ class AccessibleScalaHandler(sublime_plugin.EventListener):
       start = str(first.begin())
       end = str(first.end())
       file = view.file_name()
-      if file:
+      if file and file.endswith(".scala"):
         moved = "move " + start + " " + end + " " + file + "\n"
         # self.transport.send(moved)
 
@@ -50,17 +53,34 @@ class StdioTransport():
       self.stdout_thread = threading.Thread(target=self.read_stdout)
       self.stdout_thread.start()
 
+      self.stderr_thread = threading.Thread(target=self.read_stderr)
+      self.stderr_thread.start()
+
     def close(self):
         self.process = None
+
+    def read_stderr(self):
+      running = True
+      while running:
+          running = self.process.poll() is None
+          try:
+              content = self.process.stderr.readline()
+              if content:
+                print(content)
+
+          except IOError as err:
+              self.close()
+              print("Failure reading stderr", err)
+              break
 
     def read_stdout(self):
         running = True
         while running:
             running = self.process.poll() is None
-
             try:
                 content = self.process.stdout.readline()
-                print(content)
+                if content:
+                  print(content)
 
             except IOError as err:
                 self.close()
@@ -74,5 +94,4 @@ class StdioTransport():
                 self.process.stdin.flush()
             except (BrokenPipeError, OSError) as err:
                 print("Failure writing to stdout", err)
-                self.close()
 

@@ -6,8 +6,7 @@ import org.scalameta.logger
 
 object SummaryDescriptionTests extends FunSuite with DiffAssertions {
   check(
-    """|// --
-       |object A {
+    """|object A {
        |  val a = 1
        |  def f = 1
        |  trait A { def f = 1 }
