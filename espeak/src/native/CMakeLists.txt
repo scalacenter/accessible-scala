@@ -38,5 +38,13 @@ file(GLOB LIB_SRC
 #
 set (LIB_NAME ${PROJECT_NAME}${PROJECT_VERSION_MAJOR})
 add_library(${LIB_NAME} SHARED ${LIB_SRC})
-install(TARGETS ${LIB_NAME} LIBRARY DESTINATION .)
+
+if(WIN32)
+  install(TARGETS ${LIB_NAME}
+    RUNTIME DESTINATION .)
+else()
+  install(TARGETS ${LIB_NAME}
+    LIBRARY DESTINATION .)
+endif()
+
 target_link_libraries(${LIB_NAME} espeak-ng)
