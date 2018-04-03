@@ -34,19 +34,6 @@ object Summary {
     stats.map(fun).filter(_.nonEmpty).mkString("", "," + nl, ends)
   }
 
-  private def visitNames(tree: Tree, offset: Option[Offset]): String = {
-    offset match {
-      case Some(x) =>
-        findPosition(tree, x) match {
-          case Some(subtree) => {
-            childrens(subtree)
-          }
-          case None => "cannot find tree"
-        }
-      case None => visitNames(tree)
-    }
-  }
-
   private def findPosition(tree: Tree, offset: Offset): Option[Tree] = {
     var found: Option[Tree] = None
     object findPos extends Traverser {
@@ -62,6 +49,19 @@ object Summary {
     found
   }
 
+  private def visitNames(tree: Tree, offset: Option[Offset]): String = {
+    offset match {
+      case Some(x) =>
+        findPosition(tree, x) match {
+          case Some(subtree) => {
+            childrens(subtree)
+          }
+          case None => "cannot find tree"
+        }
+      case None => visitNames(tree)
+    }
+  }
+
   private def childrens(tree: Tree): String = tree match {
     case t: Defn.Object => childrens("object", t.name.value, t.templ.stats)
     case t: Defn.Class  => childrens("class", t.name.value, t.templ.stats)
@@ -73,7 +73,8 @@ object Summary {
       val lastDollard = full.lastIndexOf("$")
 
       val short =
-        if (lastDollard != -1) full.slice(lastDollard + 1, full.size - 4)
+        if (lastDollard != -1)
+          full.slice(lastDollard + 1, full.size - "Impl".size)
         else "???"
 
       s"not implemented: childrens of $short"
@@ -91,7 +92,7 @@ object Summary {
     s"$node $name:" + sep + statsRes
   }
 
-  private def visitDefiniton(subtree: Tree): String = subtree match {
+  def visitDefiniton(subtree: Tree): String = subtree match {
     case Defn.Val(_, List(Pat.Var(name)), _, _) => s"val $name"
     case Defn.Var(_, List(Pat.Var(name)), _, _) => s"val $name"
     case t: Defn.Def                            => s"def ${t.name}"
@@ -100,6 +101,9 @@ object Summary {
     case t: Defn.Class                          => s"class ${t.name}"
     case t: Defn.Trait                          => s"trait ${t.name}"
     case t: Defn.Object                         => s"object ${t.name}"
+    case t: Pkg.Object                          => s"package object ${t.name}"
+    case t: Pkg                                 => s"package ${t.ref}"
+    case _                                      => ""
   }
 
   private def packageName(ref: Term.Ref): String = spaces(ref.toString)
