@@ -1,6 +1,14 @@
 [
   {
-    "keys": ["ctrl+shift+e"],
-    "command": "accessible_scala"
+    "keys": ["ctrl+shift+s"],
+    "command": "ascala_summary"
+  },
+  {
+    "keys": ["ctrl+shift+d"],
+    "command": "ascala_describe"
+  },
+  {
+    "keys": ["ctrl+shift+b"],
+    "command": "ascala_breadcrumbs"
   }
 ]

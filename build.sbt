@@ -4,18 +4,20 @@ val pluginPath = Def.setting {
   (baseDirectory in ThisBuild).value / "plugins" / "sublime-text" / "accessible-scala"
 }
 
+val libraryPath = Def.setting {
+  val targetDir = pluginPath.value / "bin"
+  val libs = List(
+    sys.env.get("ESPEAK_LIB_PATH"),
+    Some(targetDir)
+  ).flatten
+  "-Djava.library.path=" + libs.mkString(":")
+}
+
 lazy val cli = project
   .in(file("cli"))
   .settings(
     fork in run := true,
-    javaOptions in run += {
-      val targetDir = pluginPath.value / "bin"
-      val libs = List(
-        sys.env.get("ESPEAK_LIB_PATH"),
-        Some(targetDir)
-      ).flatten
-      "-Djava.library.path=" + libs.mkString(":")
-    },
+    javaOptions in run += libraryPath.value,
     moduleName := "accessible-scala",
     mainClass.in(assembly) := Some("ch.epfl.scala.accessible.Main"),
     assemblyOutputPath in assembly := pluginPath.value / "ascala.jar"
@@ -49,11 +51,20 @@ lazy val testsShared = project
       "org.scalameta" %% "testkit" % metaV
     )
   )
-  .dependsOn(lib)
+  .dependsOn(lib) //, espeak)
 
 lazy val unit = project
   .in(file("tests/unit"))
   .dependsOn(testsShared)
+  .settings(
+    fork in (Test, test) := true,
+    fork in (Test, testOnly) := true,
+    fork in (Test, testQuick) := true,
+    cancelable in Global := true,
+    javaOptions in (Test, test) += libraryPath.value,
+    javaOptions in (Test, testOnly) ++= (javaOptions in (Test, test)).value,
+    javaOptions in (Test, testQuick) ++= (javaOptions in (Test, test)).value
+  )
 
 lazy val slow = project
   .in(file("tests/slow"))
@@ -68,7 +79,9 @@ lazy val slow = project
         if (sys.env.get("CI").isDefined) "4"
         else sys.env.get("SLOWMEM").getOrElse("20")
 
-      Seq(
+      val libOptions = libraryPath.value
+
+      libOptions :: List(
         "-Xss20m",
         "-Xms4G",
         s"-Xmx${mem}G",

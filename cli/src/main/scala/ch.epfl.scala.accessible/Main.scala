@@ -13,43 +13,54 @@ object Main {
   def main(args: Array[String]): Unit = {
     System.loadLibrary("scala-espeak0")
     val espeak = new Espeak
-    val open = "open (.*)".r
-    val move = "move (\\d+) (\\d+) (.*)".r
+
+    val file = "(.*)"
+    val pos = "(\\d+)"
+
+    val summary = s"summary $file".r
+    val summaryAt = s"summary-at $pos $file".r
+    val describe = s"describe $pos $file".r
+    val breadcrumbs = s"breadcrumbs $pos $file".r
 
     println("running")
-    espeak.synthesize("running")
+    espeak.synthesize("running " + scala.util.Random.nextInt(100))
+
     var running = true
     while (running) {
       try {
-        readLine() match {
-          case open(path) =>
-            espeak.stop()
-            espeak.synthesize("open")
-            espeak.synthesize(Summary(Paths.get(path)))
-          case move(startS, endS, path) =>
-            espeak.stop()
-            espeak.synthesize("move")
-            espeak.synthesize(Summary(Paths.get(path)))
-          case null =>
-            espeak.stop()
-            espeak.synthesize("closing.")
-            running = false
-          case e =>
-            espeak.stop()
-            espeak.synthesize(s"else: $e")
-        }
+        val line = readLine()
+        println(line)
+        espeak.stop()
+
+        val output =
+          line match {
+            case summary(file) =>
+              Summary(Paths.get(file))
+            case summaryAt(pos, file) =>
+              Summary(Paths.get(file), Offset(pos))
+            case describe(pos, file) =>
+              Describe(Paths.get(file), Offset(pos))
+            case breadcrumbs(pos, file) =>
+              Breadcrumbs(Paths.get(file), Offset(pos))
+            case null =>
+              running = false
+              "closing."
+            case e =>
+              s"unknown command: $e"
+          }
+
+        espeak.synthesize(output)
       } catch {
         case e: InterruptedIOException => {
-          espeak.stop()
           espeak.synthesize("InterruptedIOException")
           running = false
         }
         case pe: ParseException => {
-          espeak.stop()
           espeak.synthesize("Cannot parse")
         }
         case NonFatal(e) => {
-          espeak.synthesize(e.getClass.toString)
+          err(e)
+          // espeak.synthesize(e.getClass.toString)
         }
       }
     }
