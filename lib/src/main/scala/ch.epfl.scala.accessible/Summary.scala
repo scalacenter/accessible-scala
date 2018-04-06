@@ -1,27 +1,24 @@
 package ch.epfl.scala.accessible
 
 import scala.meta._
-
-import java.nio.file.{Files, Path}
-import java.nio.charset.StandardCharsets
-
-case class Offset(value: Int)
+import java.nio.file.Path
 
 object Summary {
 
   def apply(tree: Tree): String =
     visitNames(tree, None)
 
+  def apply(path: Path): String =
+    apply(path, None)
+
+  def apply(path: Path, offset: Offset): String =
+    apply(path, Some(offset))
+
+  def apply(path: Path, offset: Option[Offset]): String =
+    apply(parse(path), offset)
+
   def apply(tree: Tree, offset: Option[Offset]): String =
     visitNames(tree, offset)
-
-  def apply(path: Path): String = apply(path, None)
-
-  def apply(path: Path, offset: Option[Offset]): String = {
-    val text = new String(Files.readAllBytes(path), StandardCharsets.UTF_8)
-    val input = Input.String(text)
-    apply(input.parse[Source].get, offset)
-  }
 
   private val nl = "\n"
 
@@ -34,29 +31,12 @@ object Summary {
     stats.map(fun).filter(_.nonEmpty).mkString("", "," + nl, ends)
   }
 
-  private def findPosition(tree: Tree, offset: Offset): Option[Tree] = {
-    var found: Option[Tree] = None
-    object findPos extends Traverser {
-      override def apply(tree: Tree): Unit = {
-        if (tree.pos.start <= offset.value &&
-            offset.value <= tree.pos.end) {
-          found = Some(tree)
-          super.apply(tree)
-        }
-      }
-    }
-    findPos(tree)
-    found
-  }
-
   private def visitNames(tree: Tree, offset: Option[Offset]): String = {
     offset match {
-      case Some(x) =>
-        findPosition(tree, x) match {
-          case Some(subtree) => {
-            childrens(subtree)
-          }
-          case None => "cannot find tree"
+      case Some(pos) =>
+        find(tree, pos) match {
+          case Some(subtree) => childrens(subtree)
+          case None          => "cannot find tree"
         }
       case None => visitNames(tree)
     }
@@ -68,6 +48,7 @@ object Summary {
     case t: Pkg         => childrens("package", packageName(t.ref), t.stats)
     case t: Pkg.Object =>
       childrens("package object", t.name.value, t.templ.stats)
+    case t: Template => childrens(t.stats)
     case e => {
       val full = e.getClass.toString
       val lastDollard = full.lastIndexOf("$")
@@ -81,18 +62,21 @@ object Summary {
     }
   }
 
-  private def childrens(node: String,
-                        name: String,
-                        stats: List[Stat]): String = {
-    val statsRes = visitNamesStats(stats, visitDefiniton, end = true)
+  private def childrens(stats: List[Stat]): String = {
+    val statsRes = visitNamesStats(stats, visitDefinition, end = true)
     val sep =
       if (statsRes.contains(nl)) nl
       else " "
-
-    s"$node $name:" + sep + statsRes
+    sep + statsRes
   }
 
-  def visitDefiniton(subtree: Tree): String = subtree match {
+  private def childrens(node: String,
+                        name: String,
+                        stats: List[Stat]): String = {
+    s"$node $name:" + childrens(stats)
+  }
+
+  def visitDefinition(subtree: Tree): String = subtree match {
     case Defn.Val(_, List(Pat.Var(name)), _, _) => s"val $name"
     case Defn.Var(_, List(Pat.Var(name)), _, _) => s"val $name"
     case t: Defn.Def                            => s"def ${t.name}"

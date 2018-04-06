@@ -4,9 +4,42 @@ import sublime_plugin
 import threading
 import subprocess
 
-import os 
+import os
 
-class AccessibleScalaHandler(sublime_plugin.EventListener):
+client = None
+
+def plugin_loaded():
+  global client
+  if not client:
+    client = AccessibleScalaClient()
+
+def plugin_unloaded():
+  global client
+  if client:
+    del client
+
+def runCommand(view, cmd):
+  file = view.file_name()
+  if file and file.endswith(".scala") and client:
+    selections = view.sel()
+    if selections:
+      first = selections[0]
+      start = str(first.begin())
+      client.sendCmd(cmd, start, file)
+
+class AscalaSummaryCommand(sublime_plugin.TextCommand):
+  def run(self, edit):
+    runCommand(self.view, "summary-at")
+
+class AscalaDescribeCommand(sublime_plugin.TextCommand):
+  def run(self, edit):
+    runCommand(self.view, "describe")
+
+class AscalaBreadcrumbsCommand(sublime_plugin.TextCommand):
+  def run(self, edit):
+    runCommand(self.view, "breadcrumbs")
+
+class AccessibleScalaClient():
   def __init__(self):
     here = os.path.dirname(os.path.realpath(__file__))
     options = "-Djava.library.path=" + os.environ['ESPEAK_LIB_PATH'] + ":" + here + "/bin"
@@ -21,77 +54,57 @@ class AccessibleScalaHandler(sublime_plugin.EventListener):
                                stdout=subprocess.PIPE)
     self.process = process
     self.transport = StdioTransport(process)
-    self.transport.start(self.receive_payload)
+    self.transport.start()
 
   def __del__(self):
-    print("done")
     self.process.terminate()
 
-  def receive_payload(self, message):
-    print(message)
+  def sendCmd(self, verb, start, file):
+    cmd = verb + " " + start + " " + file + "\n"
+    self.transport.send(cmd)
 
-  def on_selection_modified_async(self, view):
-    selections = view.sel()
-    if selections:
-      first = selections[0]
-      start = str(first.begin())
-      end = str(first.end())
-      file = view.file_name()
-      if file and file.endswith(".scala"):
-        moved = "move " + start + " " + end + " " + file + "\n"
-        # self.transport.send(moved)
+  def sendCmd2(self, verb, file):
+    cmd = verb + " " + file + "\n"
+    self.transport.send(cmd)    
 
-  def on_activated_async(self, view):
-    file = view.file_name()
-    # self.transport.send("open " + file + "\n")
+  def summary(self, file):
+    self.sendCmd2("summary", file)
 
 class StdioTransport():
-    def __init__(self, process):
-        self.process = process
+  def __init__(self, process):
+      self.process = process
 
-    def start(self, on_receive):
-      self.stdout_thread = threading.Thread(target=self.read_stdout)
-      self.stdout_thread.start()
+  def start(self):
+    self.stdout_thread = threading.Thread(target=self.read_stdout)
+    self.stdout_thread.start()
 
-      self.stderr_thread = threading.Thread(target=self.read_stderr)
-      self.stderr_thread.start()
+    self.stderr_thread = threading.Thread(target=self.read_stderr)
+    self.stderr_thread.start()
 
-    def close(self):
-        self.process = None
+  def read_stdout(self):
+    self.read(self.process.stdout)
 
-    def read_stderr(self):
-      running = True
-      while running:
-          running = self.process.poll() is None
-          try:
-              content = self.process.stderr.readline()
-              if content:
-                print(content)
+  def read_stderr(self):
+    self.read(self.process.stderr)
+    
+  def read(self, stream):
+    running = True
+    while running:
+      running = self.process.poll() is None
+      try:
+        content = stream.readline()
+        if content:
+          print(content)
 
-          except IOError as err:
-              self.close()
-              print("Failure reading stderr", err)
-              break
+      except IOError as err:
+        print("IOError", err)
+        break
 
-    def read_stdout(self):
-        running = True
-        while running:
-            running = self.process.poll() is None
-            try:
-                content = self.process.stdout.readline()
-                if content:
-                  print(content)
-
-            except IOError as err:
-                self.close()
-                print("Failure reading stdout", err)
-                break
-
-    def send(self, message):
-        if self.process:
-            try:
-                self.process.stdin.write(message)
-                self.process.stdin.flush()
-            except (BrokenPipeError, OSError) as err:
-                print("Failure writing to stdout", err)
+  def send(self, message):
+    if self.process:
+      try:
+        self.process.stdin.write(message)
+        self.process.stdin.flush()
+      except (BrokenPipeError, OSError) as err:
+        print("Failure writing to stdout", err)
 
