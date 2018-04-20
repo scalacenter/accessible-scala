@@ -32,17 +32,16 @@ JNIEXPORT void JNICALL Java_ch_epfl_scala_accessible_espeak_Espeak_nativeSynthes
       &unique_identifier,
       object
     );
-  espeak_Synchronize();
 
   if (c_text) (*env)->ReleaseStringUTFChars(env, text, c_text);
 
   switch (result) {
-    case EE_OK:             return JNI_TRUE;
+    case EE_OK:             break;
     case EE_INTERNAL_ERROR: printf("espeak_Synth: internal error.\n"); break;
     case EE_BUFFER_FULL:    printf("espeak_Synth: buffer full.\n"); break;
     case EE_NOT_FOUND:      printf("espeak_Synth: not found.\n"); break;
   }
-
+  return;
 }
 
 JNIEXPORT void JNICALL Java_ch_epfl_scala_accessible_espeak_Espeak_nativeStop
