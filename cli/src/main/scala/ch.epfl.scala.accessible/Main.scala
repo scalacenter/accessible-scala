@@ -9,7 +9,6 @@ import scala.util.control.NonFatal
 import scala.meta.parsers.ParseException
 
 object Main {
-
   def main(args: Array[String]): Unit = {
     System.loadLibrary("scala-espeak0")
     val espeak = new Espeak
@@ -21,6 +20,7 @@ object Main {
     val summaryAt = s"summary-at $pos $file".r
     val describe = s"describe $pos $file".r
     val breadcrumbs = s"breadcrumbs $pos $file".r
+    val move = s"move $pos $pos $pos $pos $file".r
 
     println("running")
     espeak.synthesize("running " + scala.util.Random.nextInt(100))
@@ -42,6 +42,8 @@ object Main {
               Describe(Paths.get(file), Offset(pos))
             case breadcrumbs(pos, file) =>
               Breadcrumbs(Paths.get(file), Offset(pos))
+            case move(fromStart, fromEnd, toStart, toEnd, file) => ""
+
             case null =>
               running = false
               "closing."
@@ -60,7 +62,6 @@ object Main {
         }
         case NonFatal(e) => {
           err(e)
-          // espeak.synthesize(e.getClass.toString)
         }
       }
     }

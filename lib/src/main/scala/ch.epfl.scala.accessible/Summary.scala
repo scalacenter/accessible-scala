@@ -70,9 +70,7 @@ object Summary {
     sep + statsRes
   }
 
-  private def childrens(node: String,
-                        name: String,
-                        stats: List[Stat]): String = {
+  private def childrens(node: String, name: String, stats: List[Stat]): String = {
     s"$node $name:" + childrens(stats)
   }
 

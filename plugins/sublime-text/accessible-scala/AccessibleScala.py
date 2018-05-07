@@ -39,10 +39,32 @@ class AscalaBreadcrumbsCommand(sublime_plugin.TextCommand):
   def run(self, edit):
     runCommand(self.view, "breadcrumbs")
 
-class AscalaCursor(sublime_plugin.ViewEventListener):
-  def on_selection_modified_async(self):
-    client.sendCmd3("moved")
+class AScalaEvents(sublime_plugin.EventListener):
+  def __init__(self):
+    self.lastSelection = None
 
+  def on_selection_modified_async(self, view):
+    selections = view.sel()
+    if selections:
+      first = selections[0]
+      toStart = str(first.begin())
+      toEnd = str(first.end())
+      fromStart = -1
+      fromEnd = -1
+
+      if self.lastSelection:
+        fromStart = str(self.lastSelection.begin())
+        fromEnd = str(self.lastSelection.end())
+
+      self.lastSelection = first
+
+      file = view.file_name()
+      if file:
+        moved = "move {0} {1} {2} {3} {4}\n".format(fromStart, fromEnd, toStart, toEnd, file)
+        # client.sendCmd3(moved)
+        # print(moved)
+      #   self.transport.send(moved)
+    
 class AccessibleScalaClient():
   def __init__(self):
     here = os.path.dirname(os.path.realpath(__file__))

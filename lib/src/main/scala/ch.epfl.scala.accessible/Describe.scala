@@ -15,7 +15,7 @@ object Describe {
 
   def describe(tree: Tree): String =
     tree match {
-      case Type.Tuple(args) => "tuple: " + args.map(describe).mkString(", ")
+      case Type.Tuple(args) => s"tuple ${args.size}: " + args.map(describe).mkString(", ")
       case Type.Name(value) => value
       case Type.Function(params, res) => {
         val dParams =

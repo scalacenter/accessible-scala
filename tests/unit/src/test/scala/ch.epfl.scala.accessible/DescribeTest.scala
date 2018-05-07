@@ -1,6 +1,6 @@
 package ch.epfl.scala.accessible
 
-// import espeak.Espeak
+import espeak.Espeak
 
 import scala.meta._
 import scala.meta.testkit.DiffAssertions
@@ -8,8 +8,8 @@ import org.scalameta.logger
 import scala.meta.parsers.Parse
 
 object DescribeTests extends FunSuite with DiffAssertions {
-  // System.loadLibrary("scala-espeak0")
-  // val espeak = new Espeak
+  System.loadLibrary("scala-espeak0")
+  val espeak = new Espeak
 
   // check(
   //   "trait Monad[F[_]] extends Applicative[F]",
@@ -17,16 +17,16 @@ object DescribeTests extends FunSuite with DiffAssertions {
   // )
 
   checkType("B", "B") // Type.Name
-  checkType("(A => B)", "function: A to B") // Type.Function
-  checkType("(() => B)", "function: Unit to B") // Type.Function
-  checkType("((A, B) => C)", "function: A, B to C") // Type.Function
-  checkType("(A, B)", "tuple: A, B") // Type.Tuple
+  // checkType("(A => B)", "function: A to B")
+  // checkType("(() => B)", "function: Unit to B")
+  // checkType("((A, B) => C)", "function: A, B to C")
+  // checkType("(A, B)", "tuple 2: A, B")
+  // checkType("F[T]")                 // Type.Apply
 
   // checkType("a.B", "")                  // Type.Select
   // checkType("a#B")                  // Type.Project
   // checkType("this.type")            // Type.Singleton
   // checkType("t.type")               // Type.Singleton
-  // checkType("F[T]")                 // Type.Apply
   // checkType("K Map V")              // Type.ApplyInfix
   // checkType("implicit A => B")      // Type.ImplicitFunction
   // checkType("A with B")             // Type.With2
@@ -57,15 +57,14 @@ object DescribeTests extends FunSuite with DiffAssertions {
   def checkType(source: String, expected: String): Unit =
     check(source, expected, Parse.parseType)
 
-  def check(source: String,
-            expected: String,
-            parser: Parse[_ <: Tree]): Unit = {
+  def check(source: String, expected: String, parser: Parse[_ <: Tree]): Unit = {
     val testName = logger.revealWhitespace(source)
     test(testName) {
       val tree = parser.apply(Input.String(source), dialects.Scala212).get
       val obtained = Describe(tree, Offset(0))
       assertNoDiff(obtained, expected)
-      // espeak.synthesize(obtained)
+      espeak.synthesize(obtained)
+      espeak.synchronize()
     }
   }
 }

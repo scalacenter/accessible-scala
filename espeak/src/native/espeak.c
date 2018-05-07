@@ -49,3 +49,9 @@ JNIEXPORT void JNICALL Java_ch_epfl_scala_accessible_espeak_Espeak_nativeStop
   espeak_Cancel();
   return;
 }
+
+JNIEXPORT void JNICALL Java_ch_epfl_scala_accessible_espeak_Espeak_nativeSynchronize
+  (JNIEnv *env, jobject object) {
+  espeak_Synchronize();
+  return;
+}
