@@ -1,28 +1,29 @@
 package ch.epfl.scala.accessible
 
-import org.scalajs.dom.{document, console, window}
+import org.scalajs.dom.{document, window}
+// import org.scalajs.dom.console
 import org.scalajs.dom.raw.HTMLTextAreaElement
 import org.scalajs.dom.ext.KeyCode
 
 import scala.scalajs.js
 
-import codemirror.{Position => CMPos, _}
+// import codemirror.{Position => CMPos, _}
+import codemirror._
 
 import scala.meta._
 
 object Main {
   def main(args: Array[String]): Unit = {
-    // import Mespeak._
-    // loadConfig(MespeakConfig)
-    // loadVoice(`en/en-us`)
-    // speak("Hello, World")
+    import Mespeak._
+    Mespeak.loadConfig(MespeakConfig)
+    loadVoice(`en/en-us`)
 
     CLike
     Sublime
 
     import EditorExtensions._
 
-    val code = Example.code2
+    val code = Example.code
 
     val isMac = window.navigator.userAgent.contains("Mac")
     val ctrl = if (isMac) "Cmd" else "Ctrl"
@@ -71,7 +72,7 @@ object Main {
     val tree = code.parse[Source].get
     val focus = Focus(tree)
 
-    def setSel(pos: Pos): Unit = {
+    def setSel(pos: Range): Unit = {
       val doc = editor.getDoc()
 
       val start = doc.posFromIndex(pos.start)
@@ -84,27 +85,40 @@ object Main {
     setSel(focus.current)
 
     editor.onKeyDown((editor, keyEvent) => {
+      stop()
+
       val keyCode = keyEvent.keyCode
-      val oldFocus = focus
+      // val oldFocus = focus
+      var handled = false
       keyCode match {
         case KeyCode.Down =>
+          handled = true
           focus.down()
         case KeyCode.Up =>
+          handled = true
           focus.up()
         case KeyCode.Left =>
+          handled = true
           focus.left()
         case KeyCode.Right =>
+          handled = true
           focus.right()
         case _ =>
           focus
       }
 
-      val handled = focus != oldFocus
-      // if (handled)
-      keyEvent.preventDefault()
+      if (handled) {
+        keyEvent.preventDefault()
+      }
 
       val pos = focus.current
       setSel(pos)
+
+      val tree = focus.currentTree
+      val summary = Summary(tree, pos)
+      
+      speak(summary)
+      
     })
 
   }

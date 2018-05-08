@@ -2,8 +2,6 @@ package ch.epfl.scala.accessible
 
 import scala.meta._
 
-case class Pos(start: Int, end: Int)
-
 object Focus {
   def apply(tree: Tree): Focus = {
     new Focus(parents = List(tree), children = Vector(tree), child = List(0))
@@ -14,10 +12,10 @@ case class Focus private (var parents: List[Tree],
                           var children: Vector[Tree],
                           var child: List[Int]) {
 
-  private def toPos(pos: Position): Pos = Pos(pos.start, pos.end)
+  private def toPos(pos: Position): Range = Range(pos.start, pos.end)
 
-  def current: Pos =
-    toPos(children(child.head).pos)
+  def current: Range = toPos(currentTree.pos)
+  def currentTree: Tree = children(child.head)
 
   def down(): Focus = {
     val currentParent = children(child.head)
@@ -49,40 +47,18 @@ case class Focus private (var parents: List[Tree],
 
     val parent = parents.head
 
-    tree match {
-      case _: Term.Name => {
-        parent match {
-          case t: Defn.Def    => Vector(t.body)
-          case t: Defn.Macro  => Vector(t.body)
-          case t: Defn.Object => t.templ.stats.toVector
-          case t: Pkg.Object  => t.templ.stats.toVector
-          case _              => default
-        }
-      }
-      case _: Pat.Var => {
-        parent match {
-          case t: Defn.Val =>
-            Vector(t.rhs)
-          case t: Defn.Var =>
-            t.rhs.map(Vector(_)).getOrElse(default)
-          case _ => default
-        }
-      }
-      case _: Type.Name => {
-        parent match {
-          case t: Defn.Class => t.templ.stats.toVector
-          case t: Defn.Trait => t.templ.stats.toVector
-          case t: Defn.Type  => Vector(t.body)
-          case _             => default
-        }
-      }
-      case _: Term.Select => {
-        default
-      }
-      case _: Term.Apply => {
-        default
-      }
-      case _ => default
+    parent match {
+      case t: Defn.Def    => Vector(t.body)
+      case t: Defn.Macro  => Vector(t.body)
+      case t: Defn.Object => t.templ.stats.toVector
+      case t: Pkg.Object  => t.templ.stats.toVector
+      case t: Defn.Val    => Vector(t.rhs)
+      case t: Defn.Var    => t.rhs.map(Vector(_)).getOrElse(default)
+      case t: Defn.Class  => t.templ.stats.toVector
+      case t: Defn.Trait  => t.templ.stats.toVector
+      case t: Defn.Type   => Vector(t.body)
+      case t: Pkg         => t.stats.toVector
+      case _              => default
     }
   }
 

@@ -1,6 +1,6 @@
 package ch.epfl.scala.accessible
 
-import espeak.Espeak
+// import espeak.Espeak
 
 import scala.meta._
 import scala.meta.testkit.DiffAssertions
@@ -8,8 +8,8 @@ import org.scalameta.logger
 import scala.meta.parsers.Parse
 
 object DescribeTests extends FunSuite with DiffAssertions {
-  System.loadLibrary("scala-espeak0")
-  val espeak = new Espeak
+  // System.loadLibrary("scala-espeak0")
+  // val espeak = new Espeak
 
   // check(
   //   "trait Monad[F[_]] extends Applicative[F]",
@@ -63,8 +63,8 @@ object DescribeTests extends FunSuite with DiffAssertions {
       val tree = parser.apply(Input.String(source), dialects.Scala212).get
       val obtained = Describe(tree, Offset(0))
       assertNoDiff(obtained, expected)
-      espeak.synthesize(obtained)
-      espeak.synchronize()
+      // espeak.synthesize(obtained)
+      // espeak.synchronize()
     }
   }
 }

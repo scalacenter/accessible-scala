@@ -20,6 +20,9 @@ object Summary {
   def apply(tree: Tree, offset: Option[Offset]): String =
     visitNames(tree, offset)
 
+  def apply(tree: Tree, range: Range): String =
+    visitNamesRange(tree, range)
+
   private val nl = "\n"
 
   private def spaces(in: String): String = in.replaceAllLiterally(".", " ")
@@ -42,6 +45,13 @@ object Summary {
     }
   }
 
+  private def visitNamesRange(tree: Tree, range: Range): String = {
+    find(tree, range) match {
+      case Some(subtree) => childrens(subtree)
+      case None          => "cannot find tree"
+    }
+  }
+
   private def childrens(tree: Tree): String = tree match {
     case t: Defn.Object => childrens("object", t.name.value, t.templ.stats)
     case t: Defn.Class  => childrens("class", t.name.value, t.templ.stats)
@@ -50,15 +60,17 @@ object Summary {
       childrens("package object", t.name.value, t.templ.stats)
     case t: Template => childrens(t.stats)
     case e => {
-      val full = e.getClass.toString
-      val lastDollard = full.lastIndexOf("$")
+      visitDefinition(e)
+      // val full = e.getClass.toString
+      // val lastDollard = full.lastIndexOf("$")
 
-      val short =
-        if (lastDollard != -1)
-          full.slice(lastDollard + 1, full.size - "Impl".size)
-        else "???"
+      // val short =
+      //   if (lastDollard != -1)
+      //     full.slice(lastDollard + 1, full.size - "Impl".size)
+      //   else "???"
 
-      s"not implemented: childrens of $short"
+      // s"not implemented: childrens of $short"
+      ""
     }
   }
 
@@ -85,6 +97,10 @@ object Summary {
     case t: Defn.Object                         => s"object ${t.name}"
     case t: Pkg.Object                          => s"package object ${t.name}"
     case t: Pkg                                 => s"package ${t.ref}"
+    case Decl.Val(_, List(Pat.Var(name)), _)    => s"val $name"
+    case Decl.Var(_, List(Pat.Var(name)), _)    => s"var $name"
+    case t: Decl.Def                            => s"def ${t.name}"
+    case t: Decl.Type                           => s"type ${t.name}"
     case _                                      => ""
   }
 
