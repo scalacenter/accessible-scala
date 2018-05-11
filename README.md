@@ -20,7 +20,6 @@ open http://localhost:8080
 
 ## TODO:
 
-* Comments
 * Term.Select chain is recursive (a.b.c => a.b => a)
+* Comments (licenses, commented out code)
 * Priority (def name over modifiers)
-* Down shortcut from package

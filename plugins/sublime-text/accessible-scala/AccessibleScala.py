@@ -39,32 +39,22 @@ class AscalaBreadcrumbsCommand(sublime_plugin.TextCommand):
   def run(self, edit):
     runCommand(self.view, "breadcrumbs")
 
-class AScalaEvents(sublime_plugin.EventListener):
-  def __init__(self):
-    self.lastSelection = None
+class AscalaLeftCommand(sublime_plugin.TextCommand):
+  def run(self, edit):
+    runCommand(self.view, "left")
 
-  def on_selection_modified_async(self, view):
-    selections = view.sel()
-    if selections:
-      first = selections[0]
-      toStart = str(first.begin())
-      toEnd = str(first.end())
-      fromStart = -1
-      fromEnd = -1
+class AscalaRightCommand(sublime_plugin.TextCommand):
+  def run(self, edit):
+    runCommand(self.view, "right")
 
-      if self.lastSelection:
-        fromStart = str(self.lastSelection.begin())
-        fromEnd = str(self.lastSelection.end())
+class AscalaUpCommand(sublime_plugin.TextCommand):
+  def run(self, edit):
+    runCommand(self.view, "up")
 
-      self.lastSelection = first
+class AscalaDownCommand(sublime_plugin.TextCommand):
+  def run(self, edit):
+    runCommand(self.view, "down")
 
-      file = view.file_name()
-      if file:
-        moved = "move {0} {1} {2} {3} {4}\n".format(fromStart, fromEnd, toStart, toEnd, file)
-        # client.sendCmd3(moved)
-        # print(moved)
-      #   self.transport.send(moved)
-    
 class AccessibleScalaClient():
   def __init__(self):
     here = os.path.dirname(os.path.realpath(__file__))
@@ -116,7 +106,7 @@ class StdioTransport():
 
   def read_stderr(self):
     self.read(self.process.stderr)
-    
+
   def read(self, stream):
     running = True
     while running:
@@ -130,6 +120,8 @@ class StdioTransport():
         print("IOError", err)
         break
 
+    print("plugin exited\n")
+
   def send(self, message):
     if self.process:
       try:
@@ -137,4 +129,5 @@ class StdioTransport():
         self.process.stdin.flush()
       except (BrokenPipeError, OSError) as err:
         print("Failure writing to stdout", err)
+
 
