@@ -20,7 +20,9 @@ open http://localhost:8080
 
 ## TODO:
 
-* Comments
+* merge to master
+* Publish GitHub
+* Basic Speech (Home => Speak Line, Ctrl + Right => Speak Word)
 * Term.Select chain is recursive (a.b.c => a.b => a)
+* Comments (licenses, commented out code)
 * Priority (def name over modifiers)
-* Down shortcut from package

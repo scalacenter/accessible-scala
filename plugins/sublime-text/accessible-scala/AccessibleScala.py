@@ -5,6 +5,7 @@ import threading
 import subprocess
 
 import os
+import re
 
 client = None
 
@@ -18,14 +19,36 @@ def plugin_unloaded():
   if client:
     del client
 
+def runCommandRange(view, cmd):
+  file = view.file_name()
+  is_scala = (
+    (file and file.endswith(".scala"))
+     # or 
+    # "Scala" in view.settings().get('syntax')
+  )
+  if is_scala and client:
+    selections = view.sel()
+    if selections:
+      first = selections[0]
+      start = str(first.begin())
+      end = str(first.end())
+      client.sendCmdRange(cmd, start, end, file)
+      client.setView(view)
+
 def runCommand(view, cmd):
   file = view.file_name()
-  if file and file.endswith(".scala") and client:
+  is_scala = (
+    (file and file.endswith(".scala"))
+     # or 
+    # "Scala" in view.settings().get('syntax')
+  )
+  if is_scala and client:
     selections = view.sel()
     if selections:
       first = selections[0]
       start = str(first.begin())
       client.sendCmd(cmd, start, file)
+      client.setView(view)
 
 class AscalaSummaryCommand(sublime_plugin.TextCommand):
   def run(self, edit):
@@ -39,32 +62,22 @@ class AscalaBreadcrumbsCommand(sublime_plugin.TextCommand):
   def run(self, edit):
     runCommand(self.view, "breadcrumbs")
 
-class AScalaEvents(sublime_plugin.EventListener):
-  def __init__(self):
-    self.lastSelection = None
+class AscalaLeftCommand(sublime_plugin.TextCommand):
+  def run(self, edit):
+    runCommandRange(self.view, "left")
 
-  def on_selection_modified_async(self, view):
-    selections = view.sel()
-    if selections:
-      first = selections[0]
-      toStart = str(first.begin())
-      toEnd = str(first.end())
-      fromStart = -1
-      fromEnd = -1
+class AscalaRightCommand(sublime_plugin.TextCommand):
+  def run(self, edit):
+    runCommandRange(self.view, "right")
 
-      if self.lastSelection:
-        fromStart = str(self.lastSelection.begin())
-        fromEnd = str(self.lastSelection.end())
+class AscalaUpCommand(sublime_plugin.TextCommand):
+  def run(self, edit):
+    runCommandRange(self.view, "up")
 
-      self.lastSelection = first
+class AscalaDownCommand(sublime_plugin.TextCommand):
+  def run(self, edit):
+    runCommandRange(self.view, "down")
 
-      file = view.file_name()
-      if file:
-        moved = "move {0} {1} {2} {3} {4}\n".format(fromStart, fromEnd, toStart, toEnd, file)
-        # client.sendCmd3(moved)
-        # print(moved)
-      #   self.transport.send(moved)
-    
 class AccessibleScalaClient():
   def __init__(self):
     here = os.path.dirname(os.path.realpath(__file__))
@@ -80,13 +93,26 @@ class AccessibleScalaClient():
                                stdout=subprocess.PIPE)
     self.process = process
     self.transport = StdioTransport(process)
-    self.transport.start()
+    self.transport.start(self.receive_payload)
+    self.view = None
 
   def __del__(self):
     self.process.terminate()
 
+  def receive_payload(self, message):
+    select_pattern = re.compile("select (\d*) (\d*)")
+    match = select_pattern.match(message)
+    if match:
+      start = int(match.group(1))
+      end = int(match.group(2))
+      self.view.run_command('accessible_scala_set_selection', {'start': start, 'end': end})
+
   def sendCmd(self, verb, start, file):
     cmd = verb + " " + start + " " + file + "\n"
+    self.transport.send(cmd)
+
+  def sendCmdRange(self, verb, start, end, file):
+    cmd = verb + " " + start + " " + end + " " + file + "\n"
     self.transport.send(cmd)
 
   def sendCmd2(self, verb, file):
@@ -100,11 +126,25 @@ class AccessibleScalaClient():
   def summary(self, file):
     self.sendCmd2("summary", file)
 
+  def setView(self, view):
+    self.view = view
+
+class AccessibleScalaSetSelection(sublime_plugin.TextCommand):
+  def run(self, edit, start, end):
+    self.view.sel().clear()
+    region = sublime.Region(start, end)
+    self.view.sel().add(region)
+    (h, v) = self.view.text_to_layout(start)
+    margin = 50
+    self.view.set_viewport_position((h, v - margin))
+
+
 class StdioTransport():
   def __init__(self, process):
       self.process = process
 
-  def start(self):
+  def start(self, on_receive):
+    self.on_receive = on_receive
     self.stdout_thread = threading.Thread(target=self.read_stdout)
     self.stdout_thread.start()
 
@@ -116,7 +156,7 @@ class StdioTransport():
 
   def read_stderr(self):
     self.read(self.process.stderr)
-    
+
   def read(self, stream):
     running = True
     while running:
@@ -124,11 +164,13 @@ class StdioTransport():
       try:
         content = stream.readline()
         if content:
-          print(content)
+          self.on_receive(content)
 
       except IOError as err:
         print("IOError", err)
         break
+
+    print("plugin exited\n")
 
   def send(self, message):
     if self.process:
@@ -137,4 +179,5 @@ class StdioTransport():
         self.process.stdin.flush()
       except (BrokenPipeError, OSError) as err:
         print("Failure writing to stdout", err)
+
 

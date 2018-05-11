@@ -1,10 +1,10 @@
 package codemirror
 
-import org.scalajs.dom.raw.{Event, Element, HTMLElement, HTMLTextAreaElement, KeyboardEvent}
+import org.scalajs.dom.raw.{HTMLTextAreaElement, KeyboardEvent}
 
 import scala.scalajs.js
 import js.annotation._
-import js.{Dictionary, RegExp, UndefOr, |}
+import js.{Dictionary, UndefOr, |, undefined}
 
 @js.native
 @JSImport("codemirror", JSImport.Namespace)
@@ -17,11 +17,19 @@ object CodeMirror extends js.Object {
 @js.native
 @JSGlobal("Doc")
 class Document protected () extends js.Object {
+  def getValue(separator: UndefOr[String] = undefined): String = js.native
   def setValue(content: String): Unit = js.native
   def setCursor(pos: Position): Unit = js.native
+  def getCursor(): Position = js.native
   def setSelection(start: Position, end: Position): Unit = js.native
   def posFromIndex(index: Int): Position = js.native
-  def indexFromPosition(pos: Position): Int = js.native
+  def indexFromPos(pos: Position): Int = js.native
+  def listSelections(): js.Array[Selection] = js.native
+}
+
+trait Selection extends js.Object {
+  def anchor: Position
+  def head: Position
 }
 
 @js.native

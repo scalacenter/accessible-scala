@@ -1,15 +1,9 @@
 package ch.epfl.scala.accessible
 
-import org.scalajs.dom.{document, window}
-// import org.scalajs.dom.console
+import org.scalajs.dom.{document, window, console}
 import org.scalajs.dom.raw.HTMLTextAreaElement
-import org.scalajs.dom.ext.KeyCode
-
 import scala.scalajs.js
-
-// import codemirror.{Position => CMPos, _}
 import codemirror._
-
 import scala.meta._
 
 object Main {
@@ -20,8 +14,6 @@ object Main {
 
     CLike
     Sublime
-
-    import EditorExtensions._
 
     val code = Example.code
 
@@ -43,7 +35,11 @@ object Main {
           "scrollPastEnd" -> false,
           "F2" -> "toggleSolarized",
           s"$ctrl-B" -> "browse",
-          "Tab" -> "defaultTab"
+          "Tab" -> "defaultTab",
+          "Alt-Right" -> "goRight",
+          "Alt-Left" -> "goLeft",
+          "Alt-Up" -> "goUp",
+          "Alt-Down" -> "goDown"
         )
       )
       .asInstanceOf[codemirror.Options]
@@ -68,58 +64,47 @@ object Main {
         options
       )
 
+
     editor.getDoc().setValue(code)
-    val tree = code.parse[Source].get
-    val focus = Focus(tree)
-
-    def setSel(pos: Range): Unit = {
+    
+    def setSel(editor: Editor, pos: Range): Unit = {
       val doc = editor.getDoc()
-
       val start = doc.posFromIndex(pos.start)
       val end = doc.posFromIndex(pos.end)
-
       doc.setSelection(start, end)
       editor.scrollIntoView(start, 10)
     }
+    
+    def runCursor(editor: Editor, action: Cursor => Cursor): Unit = {
+      val doc = editor.getDoc()
+      val code = doc.getValue()
 
-    setSel(focus.current)
+      code.parse[Source] match {
+        case Parsed.Success(tree) =>
+          
+          val selections = doc.listSelections()
 
-    editor.onKeyDown((editor, keyEvent) => {
-      stop()
+          val range = 
+            if(selections.size >= 1) {
+              val selection = selections.head
+              val start = doc.indexFromPos(selection.anchor)
+              val end = doc.indexFromPos(selection.head)
+              Range(start, end)
+            } else {
+              val cursor = doc.getCursor()
+              val offset = doc.indexFromPos(cursor)
+              Range(offset, offset)
+            }
 
-      val keyCode = keyEvent.keyCode
-      // val oldFocus = focus
-      var handled = false
-      keyCode match {
-        case KeyCode.Down =>
-          handled = true
-          focus.down()
-        case KeyCode.Up =>
-          handled = true
-          focus.up()
-        case KeyCode.Left =>
-          handled = true
-          focus.left()
-        case KeyCode.Right =>
-          handled = true
-          focus.right()
-        case _ =>
-          focus
+          val cursor = Cursor(tree, range)
+          setSel(editor, action(cursor).current)
+        case _ => ()
       }
+    }
 
-      if (handled) {
-        keyEvent.preventDefault()
-      }
-
-      val pos = focus.current
-      setSel(pos)
-
-      val tree = focus.currentTree
-      val summary = Summary(tree, pos)
-      
-      speak(summary)
-      
-    })
-
+    CodeMirror.commands.goRight = (editor: Editor) => runCursor(editor, _.right)
+    CodeMirror.commands.goLeft = (editor: Editor) => runCursor(editor, _.left)
+    CodeMirror.commands.goUp = (editor: Editor) => runCursor(editor, _.up)
+    CodeMirror.commands.goDown = (editor: Editor) => runCursor(editor, _.down)
   }
 }
