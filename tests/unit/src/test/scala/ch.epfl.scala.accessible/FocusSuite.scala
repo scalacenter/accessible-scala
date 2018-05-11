@@ -17,6 +17,16 @@ object FocusSuite extends FunSuite {
   //   )
   // }
 
+  // test("down") {
+  //   doFocus(
+  //     "package a.b",
+  //     ("→package a.b←", down),
+  //     ("package →a.b←", down),
+  //     ("package →a←.b", down),
+  //     ("package →a←.b", down),
+  //   )
+  // }
+
   // test("right") {
   //   doFocus(
   //     "class A; class B",
@@ -52,25 +62,25 @@ object FocusSuite extends FunSuite {
   //   )
   // }
 
-  test("no children (bis)") {
-    doFocus(
-      "class A",
-      ("→class A←", down),
-      ("class →A←", down),
-      ("class →A←", down)
-    )
-  }
-
-  // test("shortcut class name to stats, val name to rhs") {
+  // test("no children (bis)") {
   //   doFocus(
-  //     "class B { val c = 1 }",
-  //     ("→class B { val c = 1 }←", down),
-  //     ("class →B← { val c = 1 }", down),
-  //     ("class B { →val c = 1← }", down),
-  //     ("class B { val →c← = 1 }", down),
-  //     ("class B { val c = →1← }", down)
+  //     "class A",
+  //     ("→class A←", down),
+  //     ("class →A←", down),
+  //     ("class →A←", down)
   //   )
   // }
+
+  test("shortcut class name to stats, val name to rhs") {
+    doFocus(
+      "class B { val c = 1 }",
+      ("→class B { val c = 1 }←", down),
+      ("class →B← { val c = 1 }", down),
+      ("class B { →val c = 1← }", down),
+      // ("class B { val →c← = 1 }", down),
+      // ("class B { val c = →1← }", down)
+    )
+  }
 
   // test("focus from offset") {
   //   val annotedSource = "→class A←; class B"
@@ -133,11 +143,11 @@ object FocusSuite extends FunSuite {
   private val startMarker = '→'
   private val stopMarker = '←'
 
-  private val noop = (((f: Focus) => f), "∅")
-  private val up = (((f: Focus) => f.up), "↑")
-  private val down = (((f: Focus) => f.down), "↓")
-  private val left = (((f: Focus) => f.left), "←")
-  private val right = (((f: Focus) => f.right), "→")
+  val noop = (((f: Focus) => f), "∅")
+  val up = (((f: Focus) => f.up), "↑")
+  val down = (((f: Focus) => f.down), "↓")
+  val left = (((f: Focus) => f.left), "←")
+  val right = (((f: Focus) => f.right), "→")
   private def doFocus(code: String, steps: (String, (Focus => Focus, String))* ): Unit = {
     val tree = code.parse[Source].get
     steps.foldLeft(Focus(tree)){ case (focus, (annotedSource, (f, label))) =>
@@ -154,18 +164,10 @@ object FocusSuite extends FunSuite {
     val fObtained = fCode.overlay(fansi.Color.Red, obtained.start, obtained.end)
     val fExpected = fCode.overlay(fansi.Color.Green, expected.start, expected.end)
 
-    // println(s"$label: $fExpected")
-
-    val diff = 
-      s"""|
-          |---
-          |$fObtained (obtained)
-          |---
-          |$fExpected (expected)""".stripMargin
-
+    println(s"$label: $fExpected")
 
     if (obtained != expected) {
-      println(diff)
+      println("   " + fObtained)
       println("failed")
       // throw new Exception("assertion failed")
     }

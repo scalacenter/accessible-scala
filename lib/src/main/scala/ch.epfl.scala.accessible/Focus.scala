@@ -16,10 +16,11 @@ object Focus {
     apply(tree, offset)
   }
 
-  def apply(tree: Tree, offset: Offset): Focus = {
-    def within(tree: Tree): Boolean = 
-      tree.pos.start <= offset.value && offset.value <= tree.pos.end
+  def apply(tree: Tree, offset: Offset): Focus = findPath(tree, offset)
+  def findPath(from: Tree, to: Tree): Focus = findPath(from, Offset(to.pos.start))
 
+  def findPath(from: Tree, offset: Offset): Focus = {
+    def within(tree: Tree): Boolean = tree.pos.start <= offset.value && offset.value <= tree.pos.end
     object navigate extends Traverser {
       override def apply(tree: Tree): Unit = {
         if (within(tree)) {
@@ -27,9 +28,9 @@ object Focus {
         }
       }
     }
-    navigate(tree)
+    // navigate(tree)
 
-    new Focus(root = tree, path = Nil)
+    new Focus(root = from, path = Nil)
   }
 
   def apply(tree: Tree): Focus = {
@@ -40,22 +41,24 @@ object Focus {
     tree.children.filter(_.tokens.nonEmpty).toVector
   }
 
-  // private def getChildren(parent: Tree, tree: Tree): Vector[Tree] = {
-  //   def default = getChildrenDefault(tree)
-  //   parent match {
-  //     case t: Defn.Def    => Vector(t.body)
-  //     case t: Defn.Macro  => Vector(t.body)
-  //     case t: Defn.Object => t.templ.stats.toVector
-  //     case t: Pkg.Object  => t.templ.stats.toVector
-  //     case t: Defn.Val    => Vector(t.rhs)
-  //     case t: Defn.Var    => t.rhs.map(Vector(_)).getOrElse(default)
-  //     case t: Defn.Class  => t.templ.stats.toVector
-  //     case t: Defn.Trait  => t.templ.stats.toVector
-  //     case t: Defn.Type   => Vector(t.body)
-  //     case t: Pkg         => t.stats.toVector
-  //     case _              => default
-  //   }
-  // }
+  private def getChildren(parent: Tree, tree: Tree): (Boolean, Vector[Tree]) = {
+    def default = (false, getChildren(tree))
+
+    parent match {
+      case t: Defn.Def    => (true, Vector(t.body))
+      case t: Defn.Macro  => (true, Vector(t.body))
+      case t: Defn.Object => (true, t.templ.stats.toVector)
+      case t: Pkg.Object  => (true, t.templ.stats.toVector)
+      case t: Defn.Val    => (true, Vector(t.rhs))
+      case t: Defn.Class  => (true, t.templ.stats.toVector)
+      case t: Defn.Trait  => (true, t.templ.stats.toVector)
+      case t: Defn.Type   => (true, Vector(t.body))
+      case t: Pkg         => (true, t.stats.toVector)
+
+      case t: Defn.Var    => t.rhs.map(rhs => (true, Vector(rhs))).getOrElse(default)
+      case _              => default
+    }
+  }
 }
 
 case class Focus private (root: Tree, path: List[(Tree, Int)]) {
@@ -69,41 +72,46 @@ case class Focus private (root: Tree, path: List[(Tree, Int)]) {
   def current: Range = toRange(currentTree.pos)
 
   def currentTree: Tree = {
-
-    // println(toString)
-
-    try {
-      path match {
-        case Nil => root
-        case (tree, child) :: _ => Focus.getChildren(tree)(child)
-      }
-    } catch {
-      case e => 
-        println()
-        println(toString)
-        throw e
+    path match {
+      case Nil => root
+      // case (tree, child) :: (parent, _) :: _ => Focus.getChildren(tree, parent)(child)
+      case (tree, child) :: _ => Focus.getChildren(tree)(child)
     }
   }
 
   def down: Focus = {
-    def downWith(tree: Tree, getChildren: Vector[Tree] => Tree): Focus = {
-      val children = Focus.getChildren(tree)
-
+    def downWith(tree: Tree, children: Vector[Tree], getChild: Vector[Tree] => Tree): Focus = {
       val nextPath = 
         if (children.isEmpty) path
-        else (getChildren(children), 0) :: path
+        else {
+          val child = getChild(children)
+          val childChildren = Focus.getChildren(child)
 
-      println()
-      println(Focus.shortName(tree))
-      println(children.map(Focus.shortName))
-      println(showPath(nextPath))
+          if (childChildren.isEmpty) path
+          else (child, 0) :: path
+        }
 
       copy(path = nextPath)
     }
 
     path match {
-      case Nil => downWith(root, _ => root)
-      case (tree, childIndex) :: _ => downWith(tree, children => children(childIndex))
+      case Nil => 
+        downWith(root, Focus.getChildren(root), _ => root)
+
+      case (tree, childIndex) :: parentPath =>
+        parentPath match {
+          case (parent, _) :: _ =>
+            val (isShorcut, children) = Focus.getChildren(tree, parent)
+            if (isShorcut) {
+              val child = children(0)
+              val focus = Focus.findPath(tree, child)
+              copy(path = focus.path ::: parentPath)
+            }
+            else downWith(tree, children, children => children(childIndex))
+
+          case Nil => 
+            downWith(tree, Focus.getChildren(tree), children => children(childIndex))
+        }
     }
   }
 
