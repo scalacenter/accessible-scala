@@ -3,141 +3,111 @@ package ch.epfl.scala.accessible
 import scala.meta._
 
 object FocusSuite extends FunSuite {
-  // test("current") {
-  //   doFocus(
-  //     "class A; class B",
-  //     ("→class A; class B←", noop)
-  //   )
-  // }
-
-  // test("down") {
-  //   doFocus(
-  //     "class A; class B",
-  //     ("→class A←; class B", down)
-  //   )
-  // }
-
-  // test("down") {
-  //   doFocus(
-  //     "package a.b",
-  //     ("→package a.b←", down),
-  //     ("package →a.b←", down),
-  //     ("package →a←.b", down),
-  //     ("package →a←.b", down),
-  //   )
-  // }
-
-  // test("right") {
-  //   doFocus(
-  //     "class A; class B",
-  //     ("→class A←; class B", down),
-  //     ("class A; →class B←", right),
-  //     ("class A; →class B←", right)
-  //   )
-  // }
-
-  // test("left") {
-  //   doFocus(
-  //     "class A; class B",
-  //     ("→class A←; class B", down),
-  //     ("class A; →class B←", right),
-  //     ("→class A←; class B", left)
-  //   )
-  // }
-
-  // test("preserve children position") {
-  //   doFocus(
-  //     "class A; class B { val c = 1 }",
-  //     ("→class A←; class B { val c = 1 }", down),
-  //     ("class A; →class B { val c = 1 }←", right),
-  //     ("class A; class →B← { val c = 1 }", down),
-  //     ("class A; →class B { val c = 1 }←", up)
-  //   )
-  // }
-
-  // test("no children") {
-  //   doFocus(
-  //     "",
-  //     ("→←", down)
-  //   )
-  // }
-
-  // test("no children (bis)") {
-  //   doFocus(
-  //     "class A",
-  //     ("→class A←", down),
-  //     ("class →A←", down),
-  //     ("class →A←", down)
-  //   )
-  // }
-
-  test("shortcut class name to stats, val name to rhs") {
+  test("current") {
     doFocus(
-      "class B { val c = 1 }",
-      ("→class B { val c = 1 }←", down),
-      ("class →B← { val c = 1 }", down),
-      ("class B { →val c = 1← }", down),
-      // ("class B { val →c← = 1 }", down),
-      // ("class B { val c = →1← }", down)
+      "class A; class B",
+      ("→class A; class B←", noop)
     )
   }
 
-  // test("focus from offset") {
-  //   val annotedSource = "→class A←; class B"
-  //   val expected = selection("class A; →class B←")
-  //   val currentCursor = selection(annotedSource)
-  //   val code = removeSourceAnnotations(annotedSource)
-  //   val tree = code.parse[Source].get
-  //   val focus = Focus(tree, Offset(currentCursor.start))
-  //   focus.up
-  //   focus.right
-  //   val obtained = focus.current
+  test("down") {
+    doFocus(
+      "class A; class B",
+      ("→class A←; class B", down)
+    )
+  }
 
-  //   assertPos(obtained, expected, code, "")
-  // }
+  test("down") {
+    doFocus(
+      "package a.b",
+      ("→package a.b←", down),
+      ("package →a.b←", down),
+      ("package →a←.b", down),
+      ("package →a←.b", down),
+    )
+  }
 
-  // test("focus from offset") {
-  //   val annotedSource =
-  //     """|object A {
-  //        |  def m = {
-  //        |    foo→←bar
-  //        |  }
-  //        |}""".stripMargin
+  test("right") {
+    doFocus(
+      "class A; class B",
+      ("→class A←; class B", down),
+      ("class A; →class B←", right),
+      ("class A; →class B←", right)
+    )
+  }
 
-  //   val expected =
-  //     selection(
-  //       """|object A {
-  //          |  def m = {
-  //          |    →foobar←
-  //          |  }
-  //          |}""".stripMargin
-  //     )
+  test("left") {
+    doFocus(
+      "class A; class B",
+      ("→class A←; class B", down),
+      ("class A; →class B←", right),
+      ("→class A←; class B", left)
+    )
+  }
 
-  //   val currentCursor = selection(annotedSource)
-  //   val code = removeSourceAnnotations(annotedSource)
-  //   val tree = code.parse[Source].get
-  //   val focus = Focus(tree, Offset(currentCursor.start))
-  //   val obtained = focus.current
+  test("preserve children position") {
+    doFocus(
+      "class A; class B { val c = 1 }",
+      ("→class A←; class B { val c = 1 }", down),
+      ("class A; →class B { val c = 1 }←", right),
+      ("class A; class →B← { val c = 1 }", down),
+      ("class A; →class B { val c = 1 }←", up)
+    )
+  }
 
-  //   assertPos(obtained, expected, code, "")
-  // }
+  test("no children") {
+    doFocus(
+      "",
+      ("→←", down)
+    )
+  }
 
-  // test("focus from offset (large example)") {
-  //   val code = Example.code
-  //   val offset = code.size / 2
-  //   val tree = code.parse[Source].get
-  //   val focus = Focus(tree, Offset(offset))
+  test("no children (bis)") {
+    doFocus(
+      "class A",
+      ("→class A←", down),
+      ("class →A←", down),
+      ("class →A←", down)
+    )
+  }
 
-  //   println(code.substring(offset - 20, offset + 20))
+  test("focus from offset") {
+    val annotedSource = "→class A←; class B"
+    val expected = selection("class A; →class B←")
+    val currentCursor = selection(annotedSource)
+    val code = removeSourceAnnotations(annotedSource)
+    val tree = code.parse[Source].get
+    val focus = Focus(tree, Offset(currentCursor.start))
+    val obtained = focus.right.current
+    assertPos(obtained, expected, code, "")
+  }
 
-  //   focus.up
-  //   focus.right
-  //   val obtained = focus.current
-  //   println("---")
-  //   println(code.substring(obtained.start, obtained.end))
+  test("focus from offset") {
+    val annotedSource =
+      """|object A {
+         |  def m = {
+         |    foo→←bar
+         |  }
+         |}""".stripMargin
 
-  //   // assertPos(obtained, expected, code, "")
-  // }
+    val expected =
+      selection(
+        """|object A {
+           |  def m = {
+           |    →foobar←
+           |  }
+           |}""".stripMargin
+      )
+
+    val currentCursor = selection(annotedSource)
+    val code = removeSourceAnnotations(annotedSource)
+    val tree = code.parse[Source].get
+    val focus = Focus(tree, Offset(currentCursor.start))
+    val obtained = focus.current
+    println(focus.currentTree)
+
+    assertPos(obtained, expected, code, "")
+  }
   
   private val nl = "\n"
   private val startMarker = '→'
@@ -173,11 +143,11 @@ object FocusSuite extends FunSuite {
     }
   } 
 
-  // private def removeSourceAnnotations(annotedSource: String): String = {
-  //   annotedSource
-  //     .replaceAllLiterally(startMarker.toString, "")
-  //     .replaceAllLiterally(stopMarker.toString, "")
-  // }
+  private def removeSourceAnnotations(annotedSource: String): String = {
+    annotedSource
+      .replaceAllLiterally(startMarker.toString, "")
+      .replaceAllLiterally(stopMarker.toString, "")
+  }
 
   private def selection(annotedSource: String): Range = {
 

@@ -5,6 +5,7 @@ import threading
 import subprocess
 
 import os
+import re
 
 client = None
 
@@ -26,6 +27,7 @@ def runCommand(view, cmd):
       first = selections[0]
       start = str(first.begin())
       client.sendCmd(cmd, start, file)
+      client.setView(view)
 
 class AscalaSummaryCommand(sublime_plugin.TextCommand):
   def run(self, edit):
@@ -70,10 +72,19 @@ class AccessibleScalaClient():
                                stdout=subprocess.PIPE)
     self.process = process
     self.transport = StdioTransport(process)
-    self.transport.start()
+    self.transport.start(self.receive_payload)
+    self.view = None
 
   def __del__(self):
     self.process.terminate()
+
+  def receive_payload(self, message):
+    select_pattern = re.compile("select (\d*) (\d*)")
+    match = select_pattern.match(message)
+    if match:
+      start = int(match.group(1))
+      end = int(match.group(2))
+      self.view.run_command('accessible_scala_set_selection', {'start': start, 'end': end})
 
   def sendCmd(self, verb, start, file):
     cmd = verb + " " + start + " " + file + "\n"
@@ -90,11 +101,22 @@ class AccessibleScalaClient():
   def summary(self, file):
     self.sendCmd2("summary", file)
 
+  def setView(self, view):
+    self.view = view
+
+class AccessibleScalaSetSelection(sublime_plugin.TextCommand):
+  def run(self, edit, start, end):
+    print("clear")
+    print("add " + str(start) + " " + str(end))
+    self.view.sel().clear()
+    self.view.sel().add(sublime.Region(start, end))
+
 class StdioTransport():
   def __init__(self, process):
       self.process = process
 
-  def start(self):
+  def start(self, on_receive):
+    self.on_receive = on_receive
     self.stdout_thread = threading.Thread(target=self.read_stdout)
     self.stdout_thread.start()
 
@@ -114,7 +136,7 @@ class StdioTransport():
       try:
         content = stream.readline()
         if content:
-          print(content)
+          self.on_receive(content)
 
       except IOError as err:
         print("IOError", err)

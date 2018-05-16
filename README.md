@@ -20,6 +20,10 @@ open http://localhost:8080
 
 ## TODO:
 
+* Focus from offset
+* Sublime text
+* Publish GitHub
+* Basic Speech (Home => Speak Line, Ctrl + Right => Speak Word)
 * Term.Select chain is recursive (a.b.c => a.b => a)
 * Comments (licenses, commented out code)
 * Priority (def name over modifiers)

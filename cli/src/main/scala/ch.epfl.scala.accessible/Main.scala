@@ -48,21 +48,16 @@ object Main {
               Breadcrumbs(Paths.get(file), Offset(pos))
     
             case down(pos, file) =>
-              println("match down")
-              val focus = Focus(Paths.get(file), Offset(pos))
-              println("focus 1")
-              focus.down
-              println("focus down")
-              val selection = focus.current
-              println("focus current")
-              println(s"select ${selection.start} ${selection.end}")
-              
-            // case right(pos, file) =>
-            // case up(pos, file) =>
-            // case left(pos, file) =>
+              focus(pos, file, _.down)
+            case right(pos, file) =>
+              focus(pos, file, _.right)
+            case up(pos, file) =>
+              focus(pos, file, _.up)
+            case left(pos, file) =>
+              focus(pos, file, _.left)
             case null =>
               running = false
-              "closing."
+              // "closing."
             case e =>
               s"unknown command: $e"
           }
@@ -82,6 +77,12 @@ object Main {
         }
       }
     }
+  }
+
+  def focus(pos: String, file: String, f: Focus => Focus): Unit = {
+    val focus = Focus(Paths.get(file), Offset(pos))
+    val selection = f(focus).current
+    println(s"select ${selection.start} ${selection.end}")
   }
 
   def err(t: Throwable): Unit = {

@@ -16,21 +16,34 @@ object Focus {
     apply(tree, offset)
   }
 
-  def apply(tree: Tree, offset: Offset): Focus = findPath(tree, offset)
-  def findPath(from: Tree, to: Tree): Focus = findPath(from, Offset(to.pos.start))
+  def apply(tree: Tree, offset: Offset): Focus = {
+    findPath(tree, tree => tree.pos.start <= offset.value && offset.value <= tree.pos.end)
+  }
 
-  def findPath(from: Tree, offset: Offset): Focus = {
-    def within(tree: Tree): Boolean = tree.pos.start <= offset.value && offset.value <= tree.pos.end
+  def findPath(from: Tree, to: Tree): Focus = 
+    findPath(from, tree => to.pos.start <= tree.pos.start && tree.pos.end <= to.pos.end)
+
+  def findPath(from: Tree, within: Tree => Boolean): Focus = {
+    val path = List.newBuilder[(Tree, Int)]
+    var parent = from
     object navigate extends Traverser {
       override def apply(tree: Tree): Unit = {
         if (within(tree)) {
+          val children = getChildren(parent)
+          val childIndex = children.indexWhere(within)
+          if(childIndex != -1) {
+            if (tree != parent) {
+              path += ((parent, childIndex))
+              parent = tree
+            }
 
+            super.apply(tree)
+          }
         }
       }
     }
-    // navigate(tree)
-
-    new Focus(root = from, path = Nil)
+    navigate(from)
+    new Focus(root = from, path = path.result.reverse)
   }
 
   def apply(tree: Tree): Focus = {
@@ -74,7 +87,6 @@ case class Focus private (root: Tree, path: List[(Tree, Int)]) {
   def currentTree: Tree = {
     path match {
       case Nil => root
-      // case (tree, child) :: (parent, _) :: _ => Focus.getChildren(tree, parent)(child)
       case (tree, child) :: _ => Focus.getChildren(tree)(child)
     }
   }
@@ -101,13 +113,19 @@ case class Focus private (root: Tree, path: List[(Tree, Int)]) {
       case (tree, childIndex) :: parentPath =>
         parentPath match {
           case (parent, _) :: _ =>
-            val (isShorcut, children) = Focus.getChildren(tree, parent)
-            if (isShorcut) {
-              val child = children(0)
-              val focus = Focus.findPath(tree, child)
-              copy(path = focus.path ::: parentPath)
+            val (isShorcut, children) = Focus.getChildren(parent, tree)
+            
+            if (!isShorcut) {
+              downWith(tree, children, children => children(childIndex))
+            } else {
+              if (children.nonEmpty) {
+                val child = children(0)
+                val focus = Focus.findPath(tree, child)
+                copy(path = focus.path ::: parentPath)
+              } else {
+                this
+              }
             }
-            else downWith(tree, children, children => children(childIndex))
 
           case Nil => 
             downWith(tree, Focus.getChildren(tree), children => children(childIndex))
@@ -138,7 +156,6 @@ case class Focus private (root: Tree, path: List[(Tree, Int)]) {
       case Nil => this
       case (tree, childIndex) :: parentPath => {
         val nextChildIndex = childIndex - 1
-
         if (nextChildIndex >= 0) copy(path = (tree, nextChildIndex) :: parentPath)
         else this
       }
