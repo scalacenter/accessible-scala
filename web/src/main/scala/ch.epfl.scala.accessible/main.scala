@@ -90,28 +90,29 @@ object Main {
       val keyCode = keyEvent.keyCode
       // val oldFocus = focus
       var handled = false
-      keyCode match {
-        case KeyCode.Down =>
-          handled = true
-          focus.down()
-        case KeyCode.Up =>
-          handled = true
-          focus.up()
-        case KeyCode.Left =>
-          handled = true
-          focus.left()
-        case KeyCode.Right =>
-          handled = true
-          focus.right()
-        case _ =>
-          focus
-      }
+      val newFocus = 
+        keyCode match {
+          case KeyCode.Down =>
+            handled = true
+            focus.down
+          case KeyCode.Up =>
+            handled = true
+            focus.up
+          case KeyCode.Left =>
+            handled = true
+            focus.left
+          case KeyCode.Right =>
+            handled = true
+            focus.right
+          case _ =>
+            focus
+        }
 
       if (handled) {
         keyEvent.preventDefault()
       }
 
-      val pos = focus.current
+      val pos = newFocus.current
       setSel(pos)
 
       val tree = focus.currentTree

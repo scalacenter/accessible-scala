@@ -79,11 +79,13 @@ class AccessibleScalaClient():
     self.process.terminate()
 
   def receive_payload(self, message):
-    select_pattern = re.compile("select (\d*) (\d*)")
+    select_pattern = re.compile("select (\d*) (\d*) (\w*)")
     match = select_pattern.match(message)
     if match:
       start = int(match.group(1))
       end = int(match.group(2))
+      className = match.group(3)
+      # print(className)
       self.view.run_command('accessible_scala_set_selection', {'start': start, 'end': end})
 
   def sendCmd(self, verb, start, file):
@@ -106,10 +108,16 @@ class AccessibleScalaClient():
 
 class AccessibleScalaSetSelection(sublime_plugin.TextCommand):
   def run(self, edit, start, end):
-    print("clear")
-    print("add " + str(start) + " " + str(end))
+    # print("clear")
+    # print("add " + str(start) + " " + str(end))
     self.view.sel().clear()
-    self.view.sel().add(sublime.Region(start, end))
+    region = sublime.Region(start, end)
+    self.view.sel().add(region)
+    # self.view.show_at_center(start)
+    (h, v) = self.view.text_to_layout(start)
+    margin = 10
+    self.view.set_viewport_position((h, v - margin))
+
 
 class StdioTransport():
   def __init__(self, process):

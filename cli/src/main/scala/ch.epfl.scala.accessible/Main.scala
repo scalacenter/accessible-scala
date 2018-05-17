@@ -81,8 +81,10 @@ object Main {
 
   def focus(pos: String, file: String, f: Focus => Focus): Unit = {
     val focus = Focus(Paths.get(file), Offset(pos))
-    val selection = f(focus).current
-    println(s"select ${selection.start} ${selection.end}")
+    val newFocus = f(focus)
+    val selection = newFocus.current
+    val short = Focus.shortName(newFocus.currentTree)
+    println(s"select ${selection.start} ${selection.end} $short")
   }
 
   def err(t: Throwable): Unit = {

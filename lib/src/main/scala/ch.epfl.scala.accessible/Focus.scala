@@ -4,8 +4,7 @@ import scala.meta._
 import java.nio.file.Path
 
 object Focus {
-
-  private def shortName(tree: Tree): String = {
+  def shortName(tree: Tree): String = {
     val full = tree.getClass.toString
     val lastDollard = full.lastIndexOf("$")
     full.slice(lastDollard + 1, full.size - "Impl".size)
