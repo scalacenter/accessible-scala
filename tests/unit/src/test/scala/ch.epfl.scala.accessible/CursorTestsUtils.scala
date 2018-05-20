@@ -2,40 +2,40 @@ package ch.epfl.scala.accessible
 
 import scala.meta._
 
-trait FocusTestsUtils extends FunSuite {
+trait CursorTestsUtils extends FunSuite {
   val nl = "\n"
   val startMarker = '→'
   val stopMarker = '←'
 
-  val noop = (((f: Focus) => f), "∅")
-  val up = (((f: Focus) => f.up), "↑")
-  val down = (((f: Focus) => f.down), "↓")
-  val left = (((f: Focus) => f.left), "←")
-  val right = (((f: Focus) => f.right), "→")
+  val noop = (((f: Cursor) => f), "∅")
+  val up = (((f: Cursor) => f.up), "↑")
+  val down = (((f: Cursor) => f.down), "↓")
+  val left = (((f: Cursor) => f.left), "←")
+  val right = (((f: Cursor) => f.right), "→")
 
-  def doFocus(codeInput: String, steps: (String, (Focus => Focus, String))* ): Unit = {
+  def doFocus(codeInput: String, steps: (String, (Cursor => Cursor, String))* ): Unit = {
     val hasStartOffset = codeInput.contains(stopMarker) || codeInput.contains(stopMarker)
 
     if(!hasStartOffset) {
       val code = codeInput
       val tree = code.parse[Source].get
-      doFocus0(code, Focus(tree), steps: _*)
+      doCursor0(code, Cursor(tree), steps: _*)
     } else {
       val code = removeSourceAnnotations(codeInput)
       val currentCursor = selection(codeInput)
       val tree = code.parse[Source].get
-      val initialFocus = Focus(tree, Offset(currentCursor.start))
-      doFocus0(code, initialFocus, steps: _*)  
+      val initialCursor = Cursor(tree, Offset(currentCursor.start))
+      doCursor0(code, initialCursor, steps: _*)  
     }
   }
 
-  private def doFocus0(code: String, initialFocus: Focus, steps: (String, (Focus => Focus, String))* ): Unit = {
-    steps.foldLeft(initialFocus){ case (focus, (annotedSource, (f, label))) =>
-      val nextFocus = f(focus)
-      val obtained = nextFocus.current
+  private def doCursor0(code: String, initialCursor: Cursor, steps: (String, (Cursor => Cursor, String))* ): Unit = {
+    steps.foldLeft(initialCursor){ case (focus, (annotedSource, (f, label))) =>
+      val nextCursor = f(focus)
+      val obtained = nextCursor.current
       val expected = selection(annotedSource)
       assertPos(obtained, expected, code, label)
-      nextFocus
+      nextCursor
     }  
   }
   

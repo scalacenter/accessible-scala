@@ -21,7 +21,12 @@ def plugin_unloaded():
 
 def runCommand(view, cmd):
   file = view.file_name()
-  if file and file.endswith(".scala") and client:
+  is_scala = (
+    (file and file.endswith(".scala"))
+     # or 
+    # "Scala" in view.settings().get('syntax')
+  )
+  if is_scala and client:
     selections = view.sel()
     if selections:
       first = selections[0]
@@ -115,7 +120,7 @@ class AccessibleScalaSetSelection(sublime_plugin.TextCommand):
     self.view.sel().add(region)
     # self.view.show_at_center(start)
     (h, v) = self.view.text_to_layout(start)
-    margin = 10
+    margin = 50
     self.view.set_viewport_position((h, v - margin))
 
 

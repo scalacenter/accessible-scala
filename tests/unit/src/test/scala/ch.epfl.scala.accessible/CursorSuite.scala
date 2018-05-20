@@ -1,8 +1,6 @@
 package ch.epfl.scala.accessible
 
-import scala.meta._
-
-object FocusSuite extends FocusTestsUtils {
+object CursorSuite extends CursorTestsUtils {
   test("current") {
     doFocus(
       "class A; class B",
@@ -22,8 +20,8 @@ object FocusSuite extends FocusTestsUtils {
       "package a.b",
       ("→package a.b←", down),
       ("package →a.b←", down),
-      ("package →a←.b", down),
-      ("package →a←.b", down),
+      ("package a.→b←", down),
+      ("package a.→b←", down)
     )
   }
 
@@ -93,6 +91,13 @@ object FocusSuite extends FocusTestsUtils {
            |}""".stripMargin,
         noop
       )
+    )
+  }
+
+  test("focus from offset") {
+    doFocus(
+      "class A { private →←val a = 1; private val b = 2}",
+      ("class A { private val a = 1; →private val b = 2←}", right)
     )
   }
 }
