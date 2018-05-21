@@ -12,8 +12,9 @@ object Cursor {
     apply(tree, range)
   }
 
-  def apply(tree: Tree, range: Range): Cursor =
+  def apply(tree: Tree, range: Range): Cursor = {
     buildCursor(Root(tree), tree => tree.pos.start <= range.start && range.end <= tree.pos.end)
+  }
 
   def apply(from: Cursor, to: Tree): Cursor = 
     buildCursor(from, tree => to.pos.start <= tree.pos.start && tree.pos.end <= to.pos.end)
@@ -39,7 +40,6 @@ object Cursor {
 
   def getChildren(tree: Tree, parent: Tree): Vector[Tree] = {
     def default = getChildren(tree)
-
     parent match {
       case t: Defn.Def    => Vector(t.body)
       case t: Defn.Macro  => Vector(t.body)
@@ -49,7 +49,6 @@ object Cursor {
       case t: Defn.Class  => t.templ.stats.toVector
       case t: Defn.Trait  => t.templ.stats.toVector
       case t: Defn.Type   => Vector(t.body)
-      case t: Pkg         => Vector(t.ref)
       case t: Defn.Var    => t.rhs.map(rhs => Vector(rhs)).getOrElse(default)
       case _              => default
     }
@@ -85,7 +84,7 @@ sealed trait Cursor {
           (
             currentLevel,
             res + nl +
-              levelIndent + tree.toString//shortName(tree)
+              levelIndent + tree.toString + " " +((tree.pos.start, tree.pos.end)) //shortName(tree)
           )
         }
       }
@@ -109,9 +108,8 @@ case class Root private(val tree: Tree) extends Cursor {
 case class Child private(val tree: Tree, parent: Cursor) extends Cursor {
   def down: Cursor = {
     val children = Cursor.getChildren(tree, parent.tree)
-    if (children.nonEmpty) {
-      Child(children.head, this)
-    } else this
+    if (children.nonEmpty) Child(children.head, this)
+    else this
   }
   def right: Cursor = {
     val children = Cursor.getChildren(parent.tree)

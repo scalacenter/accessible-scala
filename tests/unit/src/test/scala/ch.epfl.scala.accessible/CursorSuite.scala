@@ -18,10 +18,8 @@ object CursorSuite extends CursorTestsUtils {
   test("down") {
     doFocus(
       "package a.b",
-      ("→package a.b←", down),
       ("package →a.b←", down),
-      // ("package a.→b←", down),
-      // ("package a.→b←", down)
+      ("package →a←.b", down)
     )
   }
 
@@ -63,7 +61,6 @@ object CursorSuite extends CursorTestsUtils {
   test("no children (bis)") {
     doFocus(
       "class A",
-      ("→class A←", down),
       ("class →A←", down),
       ("class →A←", down)
     )

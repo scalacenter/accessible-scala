@@ -19,24 +19,25 @@ trait CursorTestsUtils extends FunSuite {
     if(!hasRange) {
       val code = codeInput
       val tree = code.parse[Source].get
-      doCursor0(code, Cursor(tree), steps: _*)
+      doCursor0(code, Cursor(tree).current, steps: _*)
     } else {
       val code = removeSourceAnnotations(codeInput)
       val range = selection(codeInput)
       val tree = code.parse[Source].get
       val initialCursor = Cursor(tree, range)
-      doCursor0(code, initialCursor, steps: _*)  
+      doCursor0(code, initialCursor.current, steps: _*)  
     }
   }
 
-  private def doCursor0(code: String, initialCursor: Cursor, steps: (String, (Cursor => Cursor, String))* ): Unit = {
-    steps.foldLeft(initialCursor){ case (focus, (annotedSource, (f, label))) =>
-      val nextCursor = f(focus)
-      println(nextCursor)
+  private def doCursor0(code: String, initialSel: Range, steps: (String, (Cursor => Cursor, String))* ): Unit = {
+    val tree = code.parse[Source].get
+    steps.foldLeft(initialSel){ case (sel, (annotedSource, (f, label))) =>
+      val currentCursor = Cursor(tree, sel)
+      val nextCursor = f(currentCursor)
       val obtained = nextCursor.current
       val expected = selection(annotedSource)
       assertPos(obtained, expected, code, label)
-      nextCursor
+      obtained
     }  
   }
   
