@@ -19,6 +19,22 @@ def plugin_unloaded():
   if client:
     del client
 
+def runCommandRange(view, cmd):
+  file = view.file_name()
+  is_scala = (
+    (file and file.endswith(".scala"))
+     # or 
+    # "Scala" in view.settings().get('syntax')
+  )
+  if is_scala and client:
+    selections = view.sel()
+    if selections:
+      first = selections[0]
+      start = str(first.begin())
+      end = str(first.end())
+      client.sendCmdRange(cmd, start, end, file)
+      client.setView(view)
+
 def runCommand(view, cmd):
   file = view.file_name()
   is_scala = (
@@ -48,19 +64,19 @@ class AscalaBreadcrumbsCommand(sublime_plugin.TextCommand):
 
 class AscalaLeftCommand(sublime_plugin.TextCommand):
   def run(self, edit):
-    runCommand(self.view, "left")
+    runCommandRange(self.view, "left")
 
 class AscalaRightCommand(sublime_plugin.TextCommand):
   def run(self, edit):
-    runCommand(self.view, "right")
+    runCommandRange(self.view, "right")
 
 class AscalaUpCommand(sublime_plugin.TextCommand):
   def run(self, edit):
-    runCommand(self.view, "up")
+    runCommandRange(self.view, "up")
 
 class AscalaDownCommand(sublime_plugin.TextCommand):
   def run(self, edit):
-    runCommand(self.view, "down")
+    runCommandRange(self.view, "down")
 
 class AccessibleScalaClient():
   def __init__(self):
@@ -84,17 +100,19 @@ class AccessibleScalaClient():
     self.process.terminate()
 
   def receive_payload(self, message):
-    select_pattern = re.compile("select (\d*) (\d*) (\w*)")
+    select_pattern = re.compile("select (\d*) (\d*)")
     match = select_pattern.match(message)
     if match:
       start = int(match.group(1))
       end = int(match.group(2))
-      className = match.group(3)
-      # print(className)
       self.view.run_command('accessible_scala_set_selection', {'start': start, 'end': end})
 
   def sendCmd(self, verb, start, file):
     cmd = verb + " " + start + " " + file + "\n"
+    self.transport.send(cmd)
+
+  def sendCmdRange(self, verb, start, end, file):
+    cmd = verb + " " + start + " " + end + " " + file + "\n"
     self.transport.send(cmd)
 
   def sendCmd2(self, verb, file):
@@ -113,12 +131,9 @@ class AccessibleScalaClient():
 
 class AccessibleScalaSetSelection(sublime_plugin.TextCommand):
   def run(self, edit, start, end):
-    # print("clear")
-    # print("add " + str(start) + " " + str(end))
     self.view.sel().clear()
     region = sublime.Region(start, end)
     self.view.sel().add(region)
-    # self.view.show_at_center(start)
     (h, v) = self.view.text_to_layout(start)
     margin = 50
     self.view.set_viewport_position((h, v - margin))

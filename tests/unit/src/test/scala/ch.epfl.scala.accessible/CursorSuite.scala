@@ -20,8 +20,8 @@ object CursorSuite extends CursorTestsUtils {
       "package a.b",
       ("→package a.b←", down),
       ("package →a.b←", down),
-      ("package a.→b←", down),
-      ("package a.→b←", down)
+      // ("package a.→b←", down),
+      // ("package a.→b←", down)
     )
   }
 
@@ -66,6 +66,13 @@ object CursorSuite extends CursorTestsUtils {
       ("→class A←", down),
       ("class →A←", down),
       ("class →A←", down)
+    )
+  }
+
+  test("shortcut") {
+    doFocus(
+      "class →A← { def m = 1 }",
+      ("class A { →def m = 1← }", down)
     )
   }
 

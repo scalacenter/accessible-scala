@@ -15,16 +15,18 @@ object Main {
 
     val file = "(.*)"
     val pos = "(\\d+)"
+    val start = pos
+    val end = pos
 
     val summary = s"summary $file".r
     val summaryAt = s"summary-at $pos $file".r
     val describe = s"describe $pos $file".r
     val breadcrumbs = s"breadcrumbs $pos $file".r
     
-    val down = s"down $pos $file".r
-    val right = s"right $pos $file".r
-    val up = s"up $pos $file".r
-    val left = s"left $pos $file".r
+    val down = s"down $start $end $file".r
+    val right = s"right $start $end $file".r
+    val up = s"up $start $end $file".r
+    val left = s"left $start $end $file".r
 
     println("running")
     // espeak.synthesize("running " + scala.util.Random.nextInt(100))
@@ -47,14 +49,15 @@ object Main {
             case breadcrumbs(pos, file) =>
               Breadcrumbs(Paths.get(file), Offset(pos))
     
-            case down(pos, file) =>
-              focus(pos, file, _.down)
-            case right(pos, file) =>
-              focus(pos, file, _.right)
-            case up(pos, file) =>
-              focus(pos, file, _.up)
-            case left(pos, file) =>
-              focus(pos, file, _.left)
+            case down(start, end, file) =>
+              println("got down")
+              focus(start, end, file, _.down)
+            case right(start, end, file) =>
+              focus(start, end, file, _.right)
+            case up(start, end, file) =>
+              focus(start, end, file, _.up)
+            case left(start, end, file) =>
+              focus(start, end, file, _.left)
             case null =>
               running = false
               // "closing."
@@ -79,12 +82,12 @@ object Main {
     }
   }
 
-  def focus(pos: String, file: String, f: Focus => Focus): Unit = {
-    val focus = Focus(Paths.get(file), Offset(pos))
+  def focus(start: String, end: String, file: String, f: Cursor => Cursor): Unit = {
+    val focus = Cursor(Paths.get(file), Range(start, end))
     val newFocus = f(focus)
     val selection = newFocus.current
-    val short = Focus.shortName(newFocus.currentTree)
-    println(s"select ${selection.start} ${selection.end} $short")
+    // val short = Cursor.shortName(newFocus.currentTree)
+    println(s"select ${selection.start} ${selection.end}")
   }
 
   def err(t: Throwable): Unit = {

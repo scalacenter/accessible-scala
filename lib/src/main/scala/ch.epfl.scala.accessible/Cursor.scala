@@ -1,12 +1,19 @@
 package ch.epfl.scala.accessible
 
 import scala.meta._
+import java.nio.file.Path
 
 object Cursor {
-  def apply(tree: Tree): Cursor = Root(tree)
+  def apply(tree: Tree): Cursor = 
+    Root(tree)
 
-  def apply(tree: Tree, offset: Offset): Cursor =
-    buildCursor(Root(tree), tree => tree.pos.start <= offset.value && offset.value <= tree.pos.end)
+  def apply(path: Path, range: Range): Cursor = {
+    val tree = parse(path)
+    apply(tree, range)
+  }
+
+  def apply(tree: Tree, range: Range): Cursor =
+    buildCursor(Root(tree), tree => tree.pos.start <= range.start && range.end <= tree.pos.end)
 
   def apply(from: Cursor, to: Tree): Cursor = 
     buildCursor(from, tree => to.pos.start <= tree.pos.start && tree.pos.end <= to.pos.end)
@@ -16,7 +23,7 @@ object Cursor {
     object navigate extends Traverser {
       override def apply(tree: Tree): Unit = {
         if (within(tree)) {
-          if (tree != root) {
+          if (tree != root.tree) {
             cursor = Child(tree, cursor)
           }
           super.apply(tree)
@@ -27,33 +34,30 @@ object Cursor {
     cursor
   }
 
-  def getChildren(tree: Tree): Vector[Tree] = {
+  def getChildren(tree: Tree): Vector[Tree] =
     tree.children.filter(_.tokens.nonEmpty).toVector
-  }
 
-  def getChildren(tree: Tree, parent: Tree): (Boolean, Vector[Tree]) = {
-    def default = (false, getChildren(tree))
+  def getChildren(tree: Tree, parent: Tree): Vector[Tree] = {
+    def default = getChildren(tree)
 
     parent match {
-      case t: Defn.Def    => (true, Vector(t.body))
-      case t: Defn.Macro  => (true, Vector(t.body))
-      case t: Defn.Object => (true, t.templ.stats.toVector)
-      case t: Pkg.Object  => (true, t.templ.stats.toVector)
-      case t: Defn.Val    => (true, Vector(t.rhs))
-      case t: Defn.Class  => (true, t.templ.stats.toVector)
-      case t: Defn.Trait  => (true, t.templ.stats.toVector)
-      case t: Defn.Type   => (true, Vector(t.body))
-      case t: Pkg         => (true, Vector(t.ref))
-      case t: Defn.Var    => t.rhs.map(rhs => (true, Vector(rhs))).getOrElse(default)
+      case t: Defn.Def    => Vector(t.body)
+      case t: Defn.Macro  => Vector(t.body)
+      case t: Defn.Object => t.templ.stats.toVector
+      case t: Pkg.Object  => t.templ.stats.toVector
+      case t: Defn.Val    => Vector(t.rhs)
+      case t: Defn.Class  => t.templ.stats.toVector
+      case t: Defn.Trait  => t.templ.stats.toVector
+      case t: Defn.Type   => Vector(t.body)
+      case t: Pkg         => Vector(t.ref)
+      case t: Defn.Var    => t.rhs.map(rhs => Vector(rhs)).getOrElse(default)
       case _              => default
     }
   }
 }
 
 sealed trait Cursor {
-  private def toRange(pos: Position): Range = Range(pos.start, pos.end)
-  def current: Range = toRange(currentTree.pos)
-  def currentTree: Tree
+  def current: Range = toRange(tree.pos)
   def tree: Tree
 
   def up: Cursor
@@ -81,7 +85,7 @@ sealed trait Cursor {
           (
             currentLevel,
             res + nl +
-              levelIndent + shortName(tree)
+              levelIndent + tree.toString//shortName(tree)
           )
         }
       }
@@ -89,6 +93,7 @@ sealed trait Cursor {
     val (_, res) = loop(this)
     res
   }
+  private def toRange(pos: Position): Range = Range(pos.start, pos.end)
 }
 case class Root private(val tree: Tree) extends Cursor {
   def down: Cursor = {
@@ -100,16 +105,13 @@ case class Root private(val tree: Tree) extends Cursor {
   def right: Cursor = this
   def left: Cursor = this
   def up: Cursor = this
-  def currentTree: Tree = tree
 }
 case class Child private(val tree: Tree, parent: Cursor) extends Cursor {
   def down: Cursor = {
-    val (isShortcut, children) = Cursor.getChildren(tree, parent.tree)
+    val children = Cursor.getChildren(tree, parent.tree)
     if (children.nonEmpty) {
-      if (!isShortcut) Child(children.head, this)
-      else Cursor(this, children.head)
-    }
-    else this
+      Child(children.head, this)
+    } else this
   }
   def right: Cursor = {
     val children = Cursor.getChildren(parent.tree)
@@ -124,6 +126,5 @@ case class Child private(val tree: Tree, parent: Cursor) extends Cursor {
     else this
   }
   def up: Cursor = parent
-  def currentTree: Tree = tree
 }
 

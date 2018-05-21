@@ -1,10 +1,13 @@
 package ch.epfl.scala.accessible
 
 object CursorPlayground extends CursorTestsUtils {
-  test("a") {
+  test("playground") { 
     doFocus(
-      "class A { →test(a)← { } }",
-      ("class A { →test(a) { }← }", up)
-    )
+      "package a.b",
+      ("→package a.b←", down),
+      ("package →a.b←", down),
+      ("package a.→b←", down),
+      // ("package a.→b←", down)
+    )    
   }
 }

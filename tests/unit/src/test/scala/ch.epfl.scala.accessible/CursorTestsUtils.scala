@@ -14,17 +14,17 @@ trait CursorTestsUtils extends FunSuite {
   val right = (((f: Cursor) => f.right), "→")
 
   def doFocus(codeInput: String, steps: (String, (Cursor => Cursor, String))* ): Unit = {
-    val hasStartOffset = codeInput.contains(stopMarker) || codeInput.contains(stopMarker)
+    val hasRange = codeInput.contains(stopMarker) || codeInput.contains(stopMarker)
 
-    if(!hasStartOffset) {
+    if(!hasRange) {
       val code = codeInput
       val tree = code.parse[Source].get
       doCursor0(code, Cursor(tree), steps: _*)
     } else {
       val code = removeSourceAnnotations(codeInput)
-      val currentCursor = selection(codeInput)
+      val range = selection(codeInput)
       val tree = code.parse[Source].get
-      val initialCursor = Cursor(tree, Offset(currentCursor.start))
+      val initialCursor = Cursor(tree, range)
       doCursor0(code, initialCursor, steps: _*)  
     }
   }
@@ -32,6 +32,7 @@ trait CursorTestsUtils extends FunSuite {
   private def doCursor0(code: String, initialCursor: Cursor, steps: (String, (Cursor => Cursor, String))* ): Unit = {
     steps.foldLeft(initialCursor){ case (focus, (annotedSource, (f, label))) =>
       val nextCursor = f(focus)
+      println(nextCursor)
       val obtained = nextCursor.current
       val expected = selection(annotedSource)
       assertPos(obtained, expected, code, label)
