@@ -1,6 +1,6 @@
 package ch.epfl.scala.accessible
 
-import org.scalajs.dom.{document, window}
+import org.scalajs.dom.{document, window, console}
 import org.scalajs.dom.raw.HTMLTextAreaElement
 import scala.scalajs.js
 import codemirror._
@@ -86,8 +86,8 @@ object Main {
           val range = 
             if(selections.size >= 1) {
               val selection = selections.head
-              val start = doc.indexFromPos(selection.head)
-              val end = doc.indexFromPos(selection.anchor)
+              val start = doc.indexFromPos(selection.anchor)
+              val end = doc.indexFromPos(selection.head)
               Range(start, end)
             } else {
               val cursor = doc.getCursor()
@@ -96,7 +96,7 @@ object Main {
             }
 
           val cursor = Cursor(tree, range)
-          setSel(editor, cursor.current)
+          setSel(editor, action(cursor).current)
         case _ => ()
       }
     }

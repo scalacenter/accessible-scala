@@ -84,7 +84,7 @@ sealed trait Cursor {
           (
             currentLevel,
             res + nl +
-              levelIndent + tree.toString + " " +((tree.pos.start, tree.pos.end)) //shortName(tree)
+              levelIndent + shortName(tree)// + " " +((tree.pos.start, tree.pos.end))
           )
         }
       }
