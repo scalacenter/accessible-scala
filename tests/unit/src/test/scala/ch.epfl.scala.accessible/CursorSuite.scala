@@ -66,10 +66,17 @@ object CursorSuite extends CursorTestsUtils {
     )
   }
 
-  test("shortcut") {
+  test("Shorcut: class name to stat") {
     doFocus(
       "class →A← { def m = 1 }",
       ("class A { →def m = 1← }", down)
+    )
+  }
+
+  test("Shorcut: object name to stat") {
+    doFocus(
+      "object →A← { def m1 = 1 }",
+      ("object A { →def m1 = 1← }", down)
     )
   }
 

@@ -48,9 +48,7 @@ object Main {
               Describe(Paths.get(file), Offset(pos))
             case breadcrumbs(pos, file) =>
               Breadcrumbs(Paths.get(file), Offset(pos))
-    
             case down(start, end, file) =>
-              println("got down")
               focus(start, end, file, _.down)
             case right(start, end, file) =>
               focus(start, end, file, _.right)
@@ -60,7 +58,6 @@ object Main {
               focus(start, end, file, _.left)
             case null =>
               running = false
-              // "closing."
             case e =>
               s"unknown command: $e"
           }
