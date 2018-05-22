@@ -13,10 +13,10 @@ object AccessibleScalaBuild extends AutoPlugin {
       "-encoding",
       "UTF-8",
       "-feature",
-      "-unchecked",
-      "-Ywarn-unused-import",
-      "-Ywarn-unused:locals",
-      "-Ywarn-unused:privates"
+      "-unchecked" //,
+      // "-Ywarn-unused-import",
+      // "-Ywarn-unused:locals",
+      // "-Ywarn-unused:privates"
     ),
     testFrameworks := List(new TestFramework("utest.runner.Framework")),
     licenses := Seq(

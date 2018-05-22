@@ -59,7 +59,7 @@ lazy val testsShared = project
       "org.scalameta" %% "testkit" % metaV
     )
   )
-  .dependsOn(libJVM)//, espeak)
+  .dependsOn(libJVM) //, espeak)
 
 lazy val forkTest = Seq(
   cancelable in Global := true,
