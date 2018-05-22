@@ -64,9 +64,8 @@ object Main {
         options
       )
 
-
     editor.getDoc().setValue(code)
-    
+
     def setSel(editor: Editor, pos: Range): Unit = {
       val doc = editor.getDoc()
       val start = doc.posFromIndex(pos.start)
@@ -74,18 +73,17 @@ object Main {
       doc.setSelection(start, end)
       editor.scrollIntoView(start, 10)
     }
-    
+
     def runCursor(editor: Editor, action: Cursor => Cursor): Unit = {
       val doc = editor.getDoc()
       val code = doc.getValue()
 
       code.parse[Source] match {
         case Parsed.Success(tree) =>
-          
           val selections = doc.listSelections()
 
-          val range = 
-            if(selections.size >= 1) {
+          val range =
+            if (selections.size >= 1) {
               val selection = selections.head
               val start = doc.indexFromPos(selection.anchor)
               val end = doc.indexFromPos(selection.head)

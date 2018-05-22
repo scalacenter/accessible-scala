@@ -4,7 +4,7 @@ import scala.meta._
 import java.nio.file.Path
 
 object Cursor {
-  def apply(tree: Tree): Cursor = 
+  def apply(tree: Tree): Cursor =
     Root(tree)
 
   def apply(path: Path, range: Range): Cursor = {
@@ -16,7 +16,7 @@ object Cursor {
     buildCursor(Root(tree), tree => tree.pos.start <= range.start && range.end <= tree.pos.end)
   }
 
-  def apply(from: Cursor, to: Tree): Cursor = 
+  def apply(from: Cursor, to: Tree): Cursor =
     buildCursor(from, tree => to.pos.start <= tree.pos.start && tree.pos.end <= to.pos.end)
 
   private def buildCursor(root: Cursor, within: Tree => Boolean): Cursor = {
@@ -84,7 +84,7 @@ sealed trait Cursor {
           (
             currentLevel,
             res + nl +
-              levelIndent + shortName(tree)// + " " +((tree.pos.start, tree.pos.end))
+              levelIndent + shortName(tree) // + " " +((tree.pos.start, tree.pos.end))
           )
         }
       }
@@ -94,7 +94,7 @@ sealed trait Cursor {
   }
   private def toRange(pos: Position): Range = Range(pos.start, pos.end)
 }
-case class Root private(val tree: Tree) extends Cursor {
+case class Root private (val tree: Tree) extends Cursor {
   def down: Cursor = {
     val children = Cursor.getChildren(tree)
     if (children.nonEmpty) Child(children.head, this)
@@ -104,7 +104,7 @@ case class Root private(val tree: Tree) extends Cursor {
   def left: Cursor = this
   def up: Cursor = this
 }
-case class Child private(val tree: Tree, parent: Cursor) extends Cursor {
+case class Child private (val tree: Tree, parent: Cursor) extends Cursor {
   def down: Cursor = {
     val children = Cursor.getChildren(tree, parent.tree)
     if (children.nonEmpty) Child(children.head, this)
@@ -116,7 +116,7 @@ case class Child private(val tree: Tree, parent: Cursor) extends Cursor {
     if (idx < children.size - 1) Child(children(idx + 1), parent)
     else {
       // when you select by it's offset, it will go as deep as possible
-      // for example: 
+      // for example:
       // val →x← = 1
       // Defn.Val(Nil, List(Pat.Var(→Term.Name("a")←)), None, Lit.Int(1))
       if (tree.tokens.size == parent.tree.tokens.size) parent.right
@@ -137,4 +137,3 @@ case class Child private(val tree: Tree, parent: Cursor) extends Cursor {
     else parent
   }
 }
-

@@ -22,7 +22,7 @@ object Main {
     val summaryAt = s"summary-at $pos $file".r
     val describe = s"describe $pos $file".r
     val breadcrumbs = s"breadcrumbs $pos $file".r
-    
+
     val down = s"down $start $end $file".r
     val right = s"right $start $end $file".r
     val up = s"up $start $end $file".r

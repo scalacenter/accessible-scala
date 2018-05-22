@@ -7,7 +7,7 @@ object Offset {
 }
 
 object Range {
-  def apply(start: String, end: String): Range = 
+  def apply(start: String, end: String): Range =
     Range(start.toInt, end.toInt)
 }
 

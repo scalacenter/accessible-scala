@@ -2,7 +2,7 @@ package ch.epfl.scala.accessible
 
 object Example {
   val code =
-"""
+    """
 import org.scalajs.dom.{document, console, window}
 import org.scalajs.dom.raw.HTMLTextAreaElement
 import org.scalajs.dom.ext.KeyCode
