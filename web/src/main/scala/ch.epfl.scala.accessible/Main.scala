@@ -12,6 +12,8 @@ object Main {
     Mespeak.loadConfig(MespeakConfig)
     loadVoice(`en/en-us`)
 
+    speak("Welcome to accessible-scaa-laa demo!")
+
     CLike
     Sublime
 
@@ -29,7 +31,7 @@ object Main {
       .Dictionary[Any](
         "autofocus" -> true,
         "mode" -> "text/x-scala",
-        "theme" -> lightTheme,
+        "theme" -> darkTheme,
         "keyMap" -> "sublime",
         "extraKeys" -> js.Dictionary(
           "scrollPastEnd" -> false,
@@ -74,6 +76,8 @@ object Main {
       editor.scrollIntoView(start, 10)
     }
 
+    var lastUtterance: Option[Int] = None
+
     def runCursor(editor: Editor, action: Cursor => Cursor): Unit = {
       val doc = editor.getDoc()
       val code = doc.getValue()
@@ -95,7 +99,13 @@ object Main {
             }
 
           val cursor = Cursor(tree, range)
-          setSel(editor, action(cursor).current)
+          val nextCursor = action(cursor)
+          setSel(editor, nextCursor.current)
+
+          lastUtterance.foreach(id => stop(id))
+          lastUtterance = Some(speak(Summary(nextCursor.tree)))
+
+
         case _ => ()
       }
     }
