@@ -18,6 +18,7 @@ object CodeMirror extends js.Object {
 @JSGlobal("Doc")
 class Document protected () extends js.Object {
   def getValue(separator: UndefOr[String] = undefined): String = js.native
+  def getLine(n: Int): String = js.native
   def getRange(from: Position, to: Position): String = js.native
   def setValue(content: String): Unit = js.native
   def setCursor(pos: Position): Unit = js.native

@@ -13,10 +13,13 @@ object Main {
     Mespeak.loadConfig(MespeakConfig)
     Mespeak.loadVoice(`en/en-us`)
 
+    var speechOn = true
     val speakOptions = new SpeakOptions { override val speed = 300 }
-    def speak(utterance: String): Unit = {
-      Mespeak.stop()
-      Mespeak.speak(utterance, speakOptions)
+    def speak(utterance: String, force: Boolean = false): Unit = {
+      if (speechOn || force) {
+        Mespeak.stop()
+        Mespeak.speak(utterance, speakOptions)
+      }
     }
 
     speak("Welcome to accessible-scaa-laa demo!")
@@ -25,7 +28,13 @@ object Main {
     CLike
     Sublime
 
-    val code = Example.code
+    val code = 
+      """|class A {
+         |  val a = 1
+         |  val b = 2
+         |}""".stripMargin
+
+      // Example.code
 
     val isMac = window.navigator.userAgent.contains("Mac")
     val ctrl = if (isMac) "Cmd" else "Ctrl"
@@ -34,8 +43,6 @@ object Main {
 
     val darkTheme = "solarized dark"
     val lightTheme = "solarized light"
-
-    var speechOn = true
 
     def setSel(editor: Editor, pos: Range): Unit = {
       val doc = editor.getDoc()
@@ -83,6 +90,11 @@ object Main {
 
     def toggleSpeech(editor: Editor): Unit = {
       speechOn = !speechOn
+      val state = 
+        if (speechOn) "on"
+        else "off"
+
+      speak("speech " + state, force = true)
     }
 
     def toggleSolarized(editor: Editor): Unit = {
@@ -100,7 +112,7 @@ object Main {
       .Dictionary[Any](
         "autofocus" -> true,
         "mode" -> "text/x-scala",
-        "theme" -> darkTheme,
+        "theme" -> lightTheme,
         "keyMap" -> "sublime",
         "extraKeys" -> js.Dictionary(
           "scrollPastEnd" -> false,
@@ -134,8 +146,8 @@ object Main {
       if (isCursorMoved) {
         val doc = editor.getDoc()
         val range = changes.ranges.head 
-        val from = range.head
-        val to = doc.getCursor()
+        val to = range.head
+        val from = doc.getCursor()
 
         if (from.line == to.line) {
           val (min, max) = (from, to).sorted
@@ -143,8 +155,9 @@ object Main {
           if (content.nonEmpty) {            
             speak(content.trim)
           }
+        } else {
+          speak(doc.getLine(to.line))
         }
-
       }
     })
 
