@@ -21,6 +21,16 @@ open http://localhost:8080
 ## TODO:
 
 * Basic Speech (Home => Speak Line, Ctrl + Right => Speak Word)
+  * [X] on/off
+  * [ ] char (left right)
+  * [ ] word
+  * [ ] begining -> end
+  * [ ] typing
+  * [ ] space
+  * [ ] delete
+
 * Term.Select chain is recursive (a.b.c => a.b => a)
 * Comments (licenses, commented out code)
 * Priority (def name over modifiers)
+
+

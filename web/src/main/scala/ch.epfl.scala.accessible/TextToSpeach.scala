@@ -26,19 +26,19 @@ object Mespeak extends js.Object {
   def isVoiceLoaded(): Boolean = js.native
   def loadConfig(config: Config): Unit = js.native
   def loadVoice(voice: Voice): Unit = js.native
-  def play(): Int = js.native
+  def play(): Long = js.native
   def resetQueue(): Unit = js.native
   def setDefaultVoice(): Unit = js.native
   def setVolume(volume: Double): Unit = js.native
   def speak(text: String,
             args: SpeakOptions = js.native,
             callback: Boolean => Unit = js.native,
-            _id: Int = js.native): Int = js.native
+            _id: Long = js.native): Long = js.native
   def speakMultipart(parts: Array[SpeakPart],
                      args: SpeakOptions = js.native,
                      callback: Boolean => Unit = js.native,
-                     _id: Int = js.native): Int = js.native
-  def stop(id: UndefOr[Int] = js.native): Unit = js.native
+                     _id: Long = js.native): Long = js.native
+  def stop(id: UndefOr[Long] = js.native): Unit = js.native
 }
 
 trait SpeakPart extends SpeakOptions {
