@@ -92,7 +92,8 @@ trait Range extends js.Object {
 object CodeMirrorExtensions {
   implicit class EditorEventHandler(val editor: Editor) extends AnyVal {
     def onKeyDown(f: (Editor, KeyboardEvent) => Unit): Unit = editor.on("keydown", f)
-    def onBeforeSelectionChange(f: (Editor, SelectionChange) => Unit): Unit = editor.on("beforeSelectionChange", f)
+    def onBeforeSelectionChange(f: (Editor, SelectionChange) => Unit): Unit =
+      editor.on("beforeSelectionChange", f)
     def onKeyHandled(f: (Editor, String, KeyboardEvent) => Unit): Unit = editor.on("keyHandled", f)
   }
 
@@ -104,7 +105,7 @@ object CodeMirrorExtensions {
     def sorted: (Position, Position) = {
       val (a, b) = ps
 
-      if(a < b) (a, b)
+      if (a < b) (a, b)
       else (b, a)
     }
   }

@@ -148,7 +148,4 @@ lazy val web = project
   .dependsOn(libJS)
   .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin)
 
-
-def deployWebTask: Def.Initialize[Task[Unit]] = Def.task {
-  
-}
+def deployWebTask: Def.Initialize[Task[Unit]] = Def.task {}

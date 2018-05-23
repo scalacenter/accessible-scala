@@ -28,13 +28,13 @@ object Main {
     CLike
     Sublime
 
-    val code = 
+    val code =
       """|class A {
          |  val a = 1
          |  val b = 2
          |}""".stripMargin
 
-      // Example.code
+    // Example.code
 
     val isMac = window.navigator.userAgent.contains("Mac")
     val ctrl = if (isMac) "Cmd" else "Ctrl"
@@ -84,13 +84,13 @@ object Main {
       }
     }
 
-    def keyFun(body: Editor => Unit): js.Function1[Editor, Unit] = {
-      editor => body(editor)
+    def keyFun(body: Editor => Unit): js.Function1[Editor, Unit] = { editor =>
+      body(editor)
     }
 
     def toggleSpeech(editor: Editor): Unit = {
       speechOn = !speechOn
-      val state = 
+      val state =
         if (speechOn) "on"
         else "off"
 
@@ -116,17 +116,16 @@ object Main {
         "keyMap" -> "sublime",
         "extraKeys" -> js.Dictionary(
           "scrollPastEnd" -> false,
-          "Tab"           -> "defaultTab",
-          "F2"            -> keyFun(toggleSolarized),
-          "F3"            -> keyFun(toggleSpeech),
-          "Alt-Right"     -> runCursor(_.right),
-          "Alt-Left"      -> runCursor(_.left),
-          "Alt-Up"        -> runCursor(_.up),
-          "Alt-Down"      -> runCursor(_.down)
+          "Tab" -> "defaultTab",
+          "F2" -> keyFun(toggleSolarized),
+          "F3" -> keyFun(toggleSpeech),
+          "Alt-Right" -> runCursor(_.right),
+          "Alt-Left" -> runCursor(_.left),
+          "Alt-Up" -> runCursor(_.up),
+          "Alt-Down" -> runCursor(_.down)
         )
       )
       .asInstanceOf[codemirror.Options]
-    
 
     val textArea = document.createElement("textarea").asInstanceOf[HTMLTextAreaElement]
     document.body.appendChild(textArea)
@@ -140,19 +139,19 @@ object Main {
     editor.onBeforeSelectionChange((editor, changes) => {
       // console.log(changes)
 
-      val isCursorMoved = 
+      val isCursorMoved =
         changes.origin.toOption.map(_ == "+move").getOrElse(false)
 
       if (isCursorMoved) {
         val doc = editor.getDoc()
-        val range = changes.ranges.head 
+        val range = changes.ranges.head
         val to = range.head
         val from = doc.getCursor()
 
         if (from.line == to.line) {
           val (min, max) = (from, to).sorted
           val content = doc.getRange(min, max)
-          if (content.nonEmpty) {            
+          if (content.nonEmpty) {
             speak(content.trim)
           }
         } else {
@@ -161,7 +160,7 @@ object Main {
       }
     })
 
-    def speakPreviousWord(editor: Editor): Unit = { 
+    def speakPreviousWord(editor: Editor): Unit = {
       val doc = editor.getDoc()
       val cursor = doc.getCursor()
       val wordPos = editor.findPosH(cursor, -1, "word")
@@ -174,12 +173,11 @@ object Main {
     }
 
     val handledChars = (
-      ('a' to 'z').toSet ++ 
-      ('A' to 'Z').toSet ++ 
-      ('1' to '9').toSet ++ 
-      "[]{}()+-*/_".toSet
+      ('a' to 'z').toSet ++
+        ('A' to 'Z').toSet ++
+        ('1' to '9').toSet ++
+        "[]{}()+-*/_".toSet
     ).map(_.toString)
-
 
     editor.onKeyDown((editor, event) => {
       val key = event.key

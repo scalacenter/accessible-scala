@@ -131,7 +131,7 @@ object CursorSuite extends CursorTestsUtils {
     val selection = cursor.up.right.right.right
     val obtained = code.substring(selection.current.start, selection.current.end)
 
-    val expected = 
+    val expected =
       """|case object CS3 extends CS {
          |    def value = 3
          |  }""".stripMargin
