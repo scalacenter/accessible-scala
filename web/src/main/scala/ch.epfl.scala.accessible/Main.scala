@@ -1,7 +1,6 @@
 package ch.epfl.scala.accessible
 
-import org.scalajs.dom
-import org.scalajs.dom.{document, window, console}
+import org.scalajs.dom.{document, console, window}
 import org.scalajs.dom.raw.HTMLTextAreaElement
 import scala.scalajs.js
 import codemirror._
@@ -9,11 +8,19 @@ import scala.meta._
 
 object Main {
   def main(args: Array[String]): Unit = {
-    import Mespeak._
+    import CodeMirrorExtensions._
+    // import Mespeak._
     Mespeak.loadConfig(MespeakConfig)
-    loadVoice(`en/en-us`)
+    Mespeak.loadVoice(`en/en-us`)
+
+    val speakOptions = new SpeakOptions { override val speed = 300 }
+    def speak(utterance: String): Unit = {
+      Mespeak.stop()
+      Mespeak.speak(utterance, speakOptions)
+    }
 
     speak("Welcome to accessible-scaa-laa demo!")
+    console.log("Welcome to accessible-scaa-laa demo!")
 
     CLike
     Sublime
@@ -23,7 +30,7 @@ object Main {
     val isMac = window.navigator.userAgent.contains("Mac")
     val ctrl = if (isMac) "Cmd" else "Ctrl"
 
-    CodeMirror.keyMap.sublime -= "Ctrl-L"
+    CodeMirror.keyMap.sublime -= s"$ctrl-L" // go to address bar
 
     val darkTheme = "solarized dark"
     val lightTheme = "solarized light"
@@ -63,7 +70,6 @@ object Main {
           setSel(editor, nextCursor.current)
 
           if (speechOn) {
-            stop()
             speak(Summary(nextCursor.tree))
           }
 
@@ -71,32 +77,15 @@ object Main {
       }
     }
 
-    val options = js
-      .Dictionary[Any](
-        "autofocus" -> true,
-        "mode" -> "text/x-scala",
-        "theme" -> darkTheme,
-        "keyMap" -> "sublime",
-        "extraKeys" -> js.Dictionary(
-          "scrollPastEnd" -> false,
-          "F2" -> "toggleSolarized",
-          "F3" -> "toggleSpeech",
-          s"$ctrl-B" -> "browse",
-          "Tab" -> "defaultTab",
-          "Alt-Right" -> runCursor(_.right),
-          "Alt-Left"  -> runCursor(_.left),
-          "Alt-Up"    -> runCursor(_.up),
-          "Alt-Down"  -> runCursor(_.down)
-        )
-      )
-      .asInstanceOf[codemirror.Options]
+    def keyFun(body: Editor => Unit): js.Function1[Editor, Unit] = {
+      editor => body(editor)
+    }
 
-    
-    CodeMirror.commands.toggleSpeech = (editor: Editor) => {
+    def toggleSpeech(editor: Editor): Unit = {
       speechOn = !speechOn
     }
 
-    CodeMirror.commands.toggleSolarized = (editor: Editor) => {
+    def toggleSolarized(editor: Editor): Unit = {
       val key = "theme"
 
       val currentTheme = editor.getOption(key).asInstanceOf[String]
@@ -107,6 +96,26 @@ object Main {
       editor.setOption(key, nextTheme)
     }
 
+    val options = js
+      .Dictionary[Any](
+        "autofocus" -> true,
+        "mode" -> "text/x-scala",
+        "theme" -> darkTheme,
+        "keyMap" -> "sublime",
+        "extraKeys" -> js.Dictionary(
+          "scrollPastEnd" -> false,
+          "Tab"           -> "defaultTab",
+          "F2"            -> keyFun(toggleSolarized),
+          "F3"            -> keyFun(toggleSpeech),
+          "Alt-Right"     -> runCursor(_.right),
+          "Alt-Left"      -> runCursor(_.left),
+          "Alt-Up"        -> runCursor(_.up),
+          "Alt-Down"      -> runCursor(_.down)
+        )
+      )
+      .asInstanceOf[codemirror.Options]
+    
+
     val textArea = document.createElement("textarea").asInstanceOf[HTMLTextAreaElement]
     document.body.appendChild(textArea)
 
@@ -116,8 +125,62 @@ object Main {
         options
       )
 
+    editor.onBeforeSelectionChange((editor, changes) => {
+      // console.log(changes)
+
+      val isCursorMoved = 
+        changes.origin.toOption.map(_ == "+move").getOrElse(false)
+
+      if (isCursorMoved) {
+        val doc = editor.getDoc()
+        val range = changes.ranges.head 
+        val from = range.head
+        val to = doc.getCursor()
+
+        if (from.line == to.line) {
+          val (min, max) = (from, to).sorted
+          val content = doc.getRange(min, max)
+          if (content.nonEmpty) {            
+            speak(content.trim)
+          }
+        }
+
+      }
+    })
+
+    def speakPreviousWord(editor: Editor): Unit = { 
+      val doc = editor.getDoc()
+      val cursor = doc.getCursor()
+      val wordPos = editor.findPosH(cursor, -1, "word")
+
+      console.log(cursor, wordPos)
+
+      val (min, max) = (wordPos, cursor).sorted
+      val content = doc.getRange(min, max)
+      speak(content)
+    }
+
+    val handledChars = (
+      ('a' to 'z').toSet ++ 
+      ('A' to 'Z').toSet ++ 
+      ('1' to '9').toSet ++ 
+      "[]{}()+-*/_".toSet
+    ).map(_.toString)
+
+
+    editor.onKeyDown((editor, event) => {
+      val key = event.key
+      val hasModKey = event.altKey || event.ctrlKey || event.metaKey
+      if (handledChars.contains(key) && !hasModKey) {
+        speak(key)
+      }
+
+      if (key == " ") {
+        println("speakPreviousWord")
+        speakPreviousWord(editor)
+      }
+    })
+
     editor.getDoc().setValue(code)
   }
 }
-
-

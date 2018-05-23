@@ -46,19 +46,19 @@ trait SpeakPart extends SpeakOptions {
 }
 
 trait SpeakOptions extends js.Object {
-  val amplitude: UndefOr[Int]
-  val pitch: UndefOr[Int]
-  val speed: UndefOr[Int]
-  val voice: UndefOr[Voice]
-  val wordgap: UndefOr[Int]
-  val variant: UndefOr[String]
-  val linebreak: UndefOr[Int]
-  val capitals: UndefOr[Int]
-  val punct: UndefOr[Boolean | String]
-  val nostop: UndefOr[Boolean]
-  val utf16: UndefOr[Boolean]
-  val ssml: UndefOr[Boolean]
-  val volume: UndefOr[Double]
-  val rawdata: UndefOr[String]
-  val log: UndefOr[Boolean]
+  val amplitude: UndefOr[Int] = js.undefined
+  val pitch: UndefOr[Int] = js.undefined
+  val speed: UndefOr[Int] = js.undefined
+  val voice: UndefOr[Voice] = js.undefined
+  val wordgap: UndefOr[Int] = js.undefined
+  val variant: UndefOr[String] = js.undefined
+  val linebreak: UndefOr[Int] = js.undefined
+  val capitals: UndefOr[Int] = js.undefined
+  val punct: UndefOr[Boolean | String] = js.undefined
+  val nostop: UndefOr[Boolean] = js.undefined
+  val utf16: UndefOr[Boolean] = js.undefined
+  val ssml: UndefOr[Boolean] = js.undefined
+  val volume: UndefOr[Double] = js.undefined
+  val rawdata: UndefOr[String] = js.undefined
+  val log: UndefOr[Boolean] = js.undefined
 }

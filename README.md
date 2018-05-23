@@ -22,12 +22,14 @@ open http://localhost:8080
 
 * Basic Speech (Home => Speak Line, Ctrl + Right => Speak Word)
   * [X] on/off
-  * [ ] char (left right)
-  * [ ] word
-  * [ ] begining -> end
-  * [ ] typing
-  * [ ] space
+  * [X] char (left right)
+  * [X] word
+
+  * [X] typing
+  * [x] space
+
   * [ ] delete
+  * [ ] begining -> end
 
 * Term.Select chain is recursive (a.b.c => a.b => a)
 * Comments (licenses, commented out code)
