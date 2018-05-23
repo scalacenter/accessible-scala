@@ -14,7 +14,10 @@ object Main {
     Mespeak.loadVoice(`en/en-us`)
 
     var speechOn = true
-    val speakOptions = new SpeakOptions { override val speed = 300 }
+    val speakOptions = new SpeakOptions { 
+      override val speed = 300 
+      override val punct = true
+    }
     def speak(utterance: String, force: Boolean = false): Unit = {
       if (speechOn || force) {
         Mespeak.stop()
@@ -22,7 +25,7 @@ object Main {
       }
     }
 
-    speak("Welcome to accessible-scaa-laa demo!")
+    Mespeak.speak("Welcome to accessible-scaa-laa demo!")
     console.log("Welcome to accessible-scaa-laa demo!")
 
     CLike
@@ -59,7 +62,6 @@ object Main {
       code.parse[Source] match {
         case Parsed.Success(tree) =>
           val selections = doc.listSelections()
-
           val range =
             if (selections.size >= 1) {
               val selection = selections.head
@@ -77,7 +79,21 @@ object Main {
           setSel(editor, nextCursor.current)
 
           if (speechOn) {
-            speak(Summary(nextCursor.tree))
+            val summary = Summary(nextCursor.tree)
+
+            val output = 
+              if (summary.nonEmpty) summary
+              else {
+                // fallback to selected test
+                if (selections.size >= 1) {
+                  val selection = selections.head
+                  doc.getRange(selection.anchor, selection.head)
+                } else {
+                  ""
+                }
+              }
+
+            speak(output)
           }
 
         case _ => ()
@@ -137,7 +153,7 @@ object Main {
       )
 
     editor.onBeforeSelectionChange((editor, changes) => {
-      // console.log(changes)
+      console.log(changes)
 
       val isCursorMoved =
         changes.origin.toOption.map(_ == "+move").getOrElse(false)
@@ -154,8 +170,6 @@ object Main {
           if (content.nonEmpty) {
             speak(content.trim)
           }
-        } else {
-          speak(doc.getLine(to.line))
         }
       }
     })
@@ -184,11 +198,12 @@ object Main {
       val hasModKey = event.altKey || event.ctrlKey || event.metaKey
       if (handledChars.contains(key) && !hasModKey) {
         speak(key)
-      }
-
-      if (key == " ") {
+      } else if (key == " ") {
         println("speakPreviousWord")
         speakPreviousWord(editor)
+      } else if (key == "Up" || key == "Down") {
+        val doc = editor.getDoc()
+        speak(doc.getLine(doc.getCursor().line))
       }
     })
 

@@ -26,8 +26,7 @@ open http://localhost:8080
   * [X] word
   * [X] typing
   * [x] space
-  
-  * [ ] up/down read line
+  * [x] up/down read line
 
   * [ ] delete
   * [ ] begining/end of buffer
