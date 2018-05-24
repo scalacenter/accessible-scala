@@ -18,7 +18,7 @@ const ScalaJs = Merge(generatedConfig, {
         test: /\.png$/,
         loader: 'file-loader',
         options: {
-          name: "[name].[hash].[ext]"
+          name: "[name].[ext]"
         }
       }
     ]
@@ -39,7 +39,7 @@ const Web = {
         test: /\.(png|svg|woff|woff2|eot|ttf)$/,
         loader: 'file-loader',
         options: {
-          name: "[name].[hash].[ext]"
+          name: "[name].[ext]"
         }
       }
     ]

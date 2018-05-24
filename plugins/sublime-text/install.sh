@@ -7,6 +7,7 @@ PLUGIN_DIR="accessible-scala"
 
 if [ ! -d "$PKGS/$PLUGIN_DIR" ]; then
   pushd $PKGS
+  rm -rf $PKGS/$PLUGIN_DIR
   ln -s "$HERE/$PLUGIN_DIR" "$PLUGIN_DIR"
   popd
 fi

@@ -118,4 +118,24 @@ object CursorSuite extends CursorTestsUtils {
       ("class A { private val a = 1; →private val b = 2←}", right)
     )
   }
+
+  test("large example") {
+    import java.nio.file.{Paths, Files}
+    import scala.meta._
+    val examplePath = Paths.get(this.getClass.getResource("/example.scala").toURI)
+    val code = new String(Files.readAllBytes(examplePath))
+    val tree = code.parse[Source].get
+    val range = tree.collect { case t @ q"CS0" => Range(t.pos.start, t.pos.end) }.head
+    val cursor = Cursor(tree, range)
+
+    val selection = cursor.up.right.right.right
+    val obtained = code.substring(selection.current.start, selection.current.end)
+
+    val expected =
+      """|case object CS3 extends CS {
+         |    def value = 3
+         |  }""".stripMargin
+
+    assert(obtained == expected)
+  }
 }

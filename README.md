@@ -20,9 +20,20 @@ open http://localhost:8080
 
 ## TODO:
 
-* merge to master
-* Publish GitHub
-* Basic Speech (Home => Speak Line, Ctrl + Right => Speak Word)
+* Basic Speech
+  * [X] on/off
+  * [X] char (left right)
+  * [X] word
+  * [X] typing
+  * [x] space
+  * [x] up/down read line
+
+  * [ ] delete
+  * [ ] begining/end of buffer
+
+* Email
 * Term.Select chain is recursive (a.b.c => a.b => a)
 * Comments (licenses, commented out code)
 * Priority (def name over modifiers)
+
+

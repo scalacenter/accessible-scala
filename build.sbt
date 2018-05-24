@@ -2,6 +2,8 @@ import sbtcrossproject.{crossProject, CrossType}
 
 lazy val metaV = "3.7.4"
 
+lazy val deployWeb = taskKey[Unit]("Deploy web demo")
+
 val pluginPath = Def.setting {
   (baseDirectory in ThisBuild).value / "plugins" / "sublime-text" / "accessible-scala"
 }
@@ -140,7 +142,10 @@ lazy val web = project
       "uglifyjs-webpack-plugin" -> "0.4.6",
       "webpack-merge" -> "4.1.0"
     ),
-    scalaJSUseMainModuleInitializer := true
+    scalaJSUseMainModuleInitializer := true,
+    deployWeb := deployWebTask.dependsOn(webpack in (Compile, fullOptJS)).value
   )
   .dependsOn(libJS)
   .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin)
+
+def deployWebTask: Def.Initialize[Task[Unit]] = Def.task {}

@@ -16,7 +16,8 @@ const ProdConfig =
   })
 
 const Common = require('./webpack.common.js');
-const publicFolderName = "out/public"
+const publicFolderName = "out/accessible-scala-web"
+const outFolder = Path.resolve(__dirname, "out")
 
 function extract(){
   return new ExtractTextPlugin({
@@ -32,7 +33,7 @@ function Web(extractSass){
     output: {
       filename: '[name].js',
       path: Path.resolve(__dirname, publicFolderName),
-      publicPath: '/public/',
+      publicPath: '/accessible-scala-web/',
       libraryTarget: 'window'
     },
     resolve: {

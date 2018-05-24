@@ -18,13 +18,23 @@ object CodeMirror extends js.Object {
 @JSGlobal("Doc")
 class Document protected () extends js.Object {
   def getValue(separator: UndefOr[String] = undefined): String = js.native
+  def getLine(n: Int): String = js.native
+  def getRange(from: Position, to: Position): String = js.native
   def setValue(content: String): Unit = js.native
   def setCursor(pos: Position): Unit = js.native
   def getCursor(): Position = js.native
-  def setSelection(start: Position, end: Position): Unit = js.native
+  def setSelection(anchor: Position,
+                   head: UndefOr[Position] = undefined,
+                   options: UndefOr[SelectionOptions] = undefined): Unit = js.native
   def posFromIndex(index: Int): Position = js.native
   def indexFromPos(pos: Position): Int = js.native
   def listSelections(): js.Array[Selection] = js.native
+}
+
+trait SelectionOptions extends js.Object {
+  val scroll: UndefOr[Boolean] = js.undefined
+  val origin: UndefOr[String] = js.undefined
+  val bias: UndefOr[Int] = js.undefined
 }
 
 trait Selection extends js.Object {
@@ -68,6 +78,7 @@ trait Options extends js.Object {
 }
 
 trait Editor extends js.Object {
+  def findPosH(cursor: Position, amount: Int, unit: String): Position
   def getDoc(): Document
   def setOption(option: String, value: js.Any): Unit
   def getOption(option: String): js.Any
@@ -76,9 +87,35 @@ trait Editor extends js.Object {
 
 }
 
-object EditorExtensions {
+trait SelectionChange extends js.Object {
+  val origin: UndefOr[String]
+  val ranges: js.Array[Range]
+}
+
+trait Range extends js.Object {
+  val anchor: Position
+  val head: Position
+}
+
+object CodeMirrorExtensions {
   implicit class EditorEventHandler(val editor: Editor) extends AnyVal {
     def onKeyDown(f: (Editor, KeyboardEvent) => Unit): Unit = editor.on("keydown", f)
+    def onBeforeSelectionChange(f: (Editor, SelectionChange) => Unit): Unit =
+      editor.on("beforeSelectionChange", f)
+    def onKeyHandled(f: (Editor, String, KeyboardEvent) => Unit): Unit = editor.on("keyHandled", f)
+  }
+
+  implicit class PositionExtensions(val pos: Position) extends AnyVal {
+    def <(other: Position): Boolean = pos.line <= other.line && pos.ch < other.ch
+  }
+
+  implicit class PositionTupleExtensions(val ps: (Position, Position)) extends AnyVal {
+    def sorted: (Position, Position) = {
+      val (a, b) = ps
+
+      if (a < b) (a, b)
+      else (b, a)
+    }
   }
 }
 
