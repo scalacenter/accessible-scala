@@ -14,8 +14,8 @@ object Main {
     Mespeak.loadVoice(`en/en-us`)
 
     var speechOn = true
-    val speakOptions = new SpeakOptions { 
-      override val speed = 300 
+    val speakOptions = new SpeakOptions {
+      override val speed = 300
       override val punct = true
     }
     def speak(utterance: String, force: Boolean = false): Unit = {
@@ -25,7 +25,9 @@ object Main {
       }
     }
 
-    Mespeak.speak("Welcome to accessible-scaa-laa demo!")
+    Mespeak.speak("Welcome to accessible-scaa-laa demo!", new SpeakOptions {
+      override val speed = 300
+    })
     console.log("Welcome to accessible-scaa-laa demo!")
 
     CLike
@@ -35,6 +37,12 @@ object Main {
       """|class A {
          |  val a = 1
          |  val b = 2
+         |}
+         |
+         |class B
+         |
+         |class D[T1, T2] extends B with C {
+         |
          |}""".stripMargin
 
     // Example.code
@@ -51,7 +59,11 @@ object Main {
       val doc = editor.getDoc()
       val start = doc.posFromIndex(pos.start)
       val end = doc.posFromIndex(pos.end)
-      doc.setSelection(start, end)
+      val options = new SelectionOptions {
+        override val scroll = false
+        override val origin = "meta"
+      }
+      doc.setSelection(start, end, options)
       editor.scrollIntoView(start, 10)
     }
 
@@ -81,16 +93,17 @@ object Main {
           if (speechOn) {
             val summary = Summary(nextCursor.tree)
 
-            val output = 
-              if (summary.nonEmpty) summary
-              else {
-                // fallback to selected test
-                if (selections.size >= 1) {
-                  val selection = selections.head
-                  doc.getRange(selection.anchor, selection.head)
-                } else {
-                  ""
-                }
+            val output =
+              if (summary.nonEmpty) {
+                summary
+              } else {
+                // fallback to selected text
+                val range = nextCursor.current
+
+                val start = doc.posFromIndex(range.start)
+                val end = doc.posFromIndex(range.end)
+
+                doc.getRange(start, end)
               }
 
             speak(output)
@@ -153,7 +166,6 @@ object Main {
       )
 
     editor.onBeforeSelectionChange((editor, changes) => {
-      console.log(changes)
 
       val isCursorMoved =
         changes.origin.toOption.map(_ == "+move").getOrElse(false)
@@ -179,8 +191,6 @@ object Main {
       val cursor = doc.getCursor()
       val wordPos = editor.findPosH(cursor, -1, "word")
 
-      console.log(cursor, wordPos)
-
       val (min, max) = (wordPos, cursor).sorted
       val content = doc.getRange(min, max)
       speak(content)
@@ -199,7 +209,6 @@ object Main {
       if (handledChars.contains(key) && !hasModKey) {
         speak(key)
       } else if (key == " ") {
-        println("speakPreviousWord")
         speakPreviousWord(editor)
       } else if (key == "Up" || key == "Down") {
         val doc = editor.getDoc()

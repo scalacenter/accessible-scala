@@ -23,10 +23,18 @@ class Document protected () extends js.Object {
   def setValue(content: String): Unit = js.native
   def setCursor(pos: Position): Unit = js.native
   def getCursor(): Position = js.native
-  def setSelection(start: Position, end: Position): Unit = js.native
+  def setSelection(anchor: Position,
+                   head: UndefOr[Position] = undefined,
+                   options: UndefOr[SelectionOptions] = undefined): Unit = js.native
   def posFromIndex(index: Int): Position = js.native
   def indexFromPos(pos: Position): Int = js.native
   def listSelections(): js.Array[Selection] = js.native
+}
+
+trait SelectionOptions extends js.Object {
+  val scroll: UndefOr[Boolean] = js.undefined
+  val origin: UndefOr[String] = js.undefined
+  val bias: UndefOr[Int] = js.undefined
 }
 
 trait Selection extends js.Object {
