@@ -67,12 +67,12 @@ object Main {
       editor.scrollIntoView(start, 10)
     }
 
-    def runCursor(action: Cursor => Cursor): js.Function1[Editor, Unit] = editor => {
+    def withTree(editor: Editor)(f: (Tree, Range) => Unit): Unit = {
       val doc = editor.getDoc()
       val code = doc.getValue()
 
       code.parse[Source] match {
-        case Parsed.Success(tree) =>
+        case Parsed.Success(tree) => {
           val selections = doc.listSelections()
           val range =
             if (selections.size >= 1) {
@@ -86,35 +86,44 @@ object Main {
               Range(offset, offset)
             }
 
-          val cursor = Cursor(tree, range)
-          val nextCursor = action(cursor)
-          setSel(editor, nextCursor.current)
-
-          if (speechOn) {
-            val summary = Summary(nextCursor.tree)
-
-            val output =
-              if (summary.nonEmpty) {
-                summary
-              } else {
-                // fallback to selected text
-                val range = nextCursor.current
-
-                val start = doc.posFromIndex(range.start)
-                val end = doc.posFromIndex(range.end)
-
-                doc.getRange(start, end)
-              }
-
-            speak(output)
-          }
-
+          f(tree, range)
+        }
         case Parsed.Error(pos, message, _) => {
           val range = Range(pos.start, pos.end)
           speak(message)
           setSel(editor, range)
         }
       }
+    }
+
+    def runCursor(action: Cursor => Cursor): js.Function1[Editor, Unit] = editor => {
+      val doc = editor.getDoc()
+      withTree(editor)((tree, range) => {
+        val cursor = Cursor(tree, range)
+        val nextCursor = action(cursor)
+        setSel(editor, nextCursor.current)
+        val summary = Summary(nextCursor.tree)
+        val output =
+          if (summary.nonEmpty) {
+            summary
+          } else {
+            // fallback to selected text
+            val range = nextCursor.current
+
+            val start = doc.posFromIndex(range.start)
+            val end = doc.posFromIndex(range.end)
+
+            doc.getRange(start, end)
+          }
+        speak(output)
+      })
+    }
+
+    def breadcrum(editor: Editor): Unit = {
+      withTree(editor)((tree, range) => {
+        val output = Breadcrumbs(tree, Offset(range.start))
+        speak(output)
+      })
     }
 
     def keyFun(body: Editor => Unit): js.Function1[Editor, Unit] =
@@ -154,7 +163,8 @@ object Main {
           "Alt-Right" -> runCursor(_.right),
           "Alt-Left" -> runCursor(_.left),
           "Alt-Up" -> runCursor(_.up),
-          "Alt-Down" -> runCursor(_.down)
+          "Alt-Down" -> runCursor(_.down),
+          s"$ctrl-B" -> keyFun(breadcrum)
         )
       )
       .asInstanceOf[codemirror.Options]
