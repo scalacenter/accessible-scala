@@ -33,20 +33,6 @@ object Main {
     CLike
     Sublime
 
-    val code =
-      """|class A {
-         |  val a = 1
-         |  val b = 2
-         |}
-         |
-         |class B
-         |
-         |class D[T1, T2] extends B with C {
-         |
-         |}""".stripMargin
-
-    // Example.code
-
     val isMac = window.navigator.userAgent.contains("Mac")
     val ctrl = if (isMac) "Cmd" else "Ctrl"
 
@@ -229,6 +215,24 @@ object Main {
       }
     })
 
-    editor.getDoc().setValue(code)
+    val defaultCode = 
+      """|class A {
+         |  val a = 1
+         |  val b = 2
+         |}
+         |
+         |class B
+         |
+         |class D[T1, T2] extends B with C {
+         |
+         |}""".stripMargin
+
+    val localStorageKey = "code"
+    val initialCode = Option(window.localStorage.getItem(localStorageKey)).getOrElse(defaultCode)
+
+    editor.getDoc().setValue(initialCode)
+    editor.onChange((_, _) => {
+      window.localStorage.setItem(localStorageKey, editor.getDoc().getValue())
+    })
   }
 }
