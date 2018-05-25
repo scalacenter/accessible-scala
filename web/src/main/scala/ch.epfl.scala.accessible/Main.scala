@@ -14,14 +14,13 @@ object Main {
     Mespeak.loadVoice(`en/en-us`)
 
     var speechOn = true
-    val speakOptions = new SpeakOptions {
-      override val speed = 300
-      override val punct = true
-    }
-    def speak(utterance: String, force: Boolean = false): Unit = {
+    def speak(utterance: String, force: Boolean = false, punctuation: Boolean = true): Unit = {
       if (speechOn || force) {
         Mespeak.stop()
-        Mespeak.speak(utterance, speakOptions)
+        Mespeak.speak(utterance, new SpeakOptions {
+          override val speed = 250
+          override val punct = punctuation
+        })
       }
     }
 
@@ -88,20 +87,21 @@ object Main {
         val cursor = Cursor(tree, range)
         val nextCursor = action(cursor)
         setSel(editor, nextCursor.current)
-        val summary = Summary(nextCursor.tree)
-        val output =
-          if (summary.nonEmpty) {
-            summary
-          } else {
-            // fallback to selected text
-            val range = nextCursor.current
+        val summary = Describe(nextCursor.tree)
+        
+        if (summary.nonEmpty) {
+          println(summary)
+          speak(summary, punctuation = false)
+        } else {
+          // fallback to selected text
+          val range = nextCursor.current
 
-            val start = doc.posFromIndex(range.start)
-            val end = doc.posFromIndex(range.end)
+          val start = doc.posFromIndex(range.start)
+          val end = doc.posFromIndex(range.end)
 
-            doc.getRange(start, end)
-          }
-        speak(output)
+          val output = doc.getRange(start, end)
+          speak(output)
+        }
       })
     }
 

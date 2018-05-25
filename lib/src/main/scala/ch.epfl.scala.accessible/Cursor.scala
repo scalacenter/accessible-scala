@@ -40,17 +40,18 @@ object Cursor {
 
   def getChildren(tree: Tree, parent: Tree): Vector[Tree] = {
     def default = getChildren(tree)
-    parent match {
-      case t: Defn.Def    => Vector(t.body)
-      case t: Defn.Macro  => Vector(t.body)
-      case t: Defn.Object => t.templ.stats.toVector
-      case t: Pkg.Object  => t.templ.stats.toVector
-      case t: Defn.Val    => Vector(t.rhs)
-      case t: Defn.Class  => t.templ.stats.toVector
-      case t: Defn.Trait  => t.templ.stats.toVector
-      case t: Defn.Type   => Vector(t.body)
-      case t: Defn.Var    => t.rhs.map(rhs => Vector(rhs)).getOrElse(default)
-      case _              => default
+    
+    (tree, parent) match {
+      case (_, t: Defn.Def   )            => Vector(t.body)
+      case (_, t: Defn.Macro )            => Vector(t.body)
+      case (_, t: Defn.Object)            => t.templ.stats.toVector
+      case (_, t: Pkg.Object )            => t.templ.stats.toVector
+      case (_, t: Defn.Val)               => Vector(t.rhs)
+      case (_: Type.Name, t: Defn.Class ) => t.templ.stats.toVector
+      case (_, t: Defn.Trait )            => t.templ.stats.toVector
+      case (_, t: Defn.Type  )            => Vector(t.body)
+      case (_, t: Defn.Var   )            => t.rhs.map(rhs => Vector(rhs)).getOrElse(default)
+      case _                              => default
     }
   }
 }
