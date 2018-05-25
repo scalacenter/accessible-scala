@@ -109,13 +109,16 @@ object Main {
             speak(output)
           }
 
-        case _ => ()
+        case Parsed.Error(pos, message, _) => {
+          val range = Range(pos.start, pos.end)
+          speak(message)
+          setSel(editor, range)
+        }
       }
     }
 
-    def keyFun(body: Editor => Unit): js.Function1[Editor, Unit] = { editor =>
-      body(editor)
-    }
+    def keyFun(body: Editor => Unit): js.Function1[Editor, Unit] =
+      editor => body(editor)
 
     def toggleSpeech(editor: Editor): Unit = {
       speechOn = !speechOn
