@@ -24,25 +24,29 @@ object Describe {
   def describe(tree: Tree): String =
     tree match {
       case Defn.Class(mods, name, tparams, ctor, templ) => {
-        val tparamsRes = 
+        val tparamsRes =
           if (tparams.nonEmpty) tparams.map(describe).mkString("parametrized with: ", ",", "")
           else ""
 
-        s"${join(mods)} trait ${describe(name)} $tparamsRes ${describe(ctor)} ${describe(templ)}"
+        s"${join(mods)} class ${describe(name)} $tparamsRes ${describe(ctor)} ${describe(templ)}"
       }
 
       // case Template(early: List[Stat], inits: List[Init], self: Self, stats: List[Stat])
-      case Template(early, inits, self, stats) =>
-        "template"
+      case Template(early, inits, self, stats) => ""
+      // "template"
 
       // case Ctor.Primary(mods: List[Mod], name: Name, paramss: List[List[Term.Param]]) =>
-      case Ctor.Primary(mods, _, paramss) =>
-        "constructor"
+      case Ctor.Primary(mods, _, paramss) => ""
+      // "constructor"
 
-      case Type.Name(value) => value
+      case Type.Name(value)         => value
       case Type.Project(qual, name) => s"${describe(qual)}, project, ${describe(name)}"
-      case Type.Singleton(ref) => s"singleton ${describe(ref)}"
-      case Type.Apply(tpt, args) => s"${describe(tpt)} of " + join(args)
+      case Type.Singleton(ref)      => s"singleton ${describe(ref)}"
+      case Type.Apply(tpt, args) =>
+        if (args.forall { case Type.Placeholder(Type.Bounds(None, None)) => true; case _ => false }) {
+          s"${describe(tpt)} taking ${args.size} parameters"
+        } else s"${describe(tpt)} of " + join(args)
+
       case Type.Tuple(args) => s"tuple ${args.size} of " + join(args)
       case Type.Function(params, res) => {
         val dParams =
@@ -53,8 +57,8 @@ object Describe {
       }
 
       case Type.Bounds(lower, higher) => {
-        lower.map("lower bounded by: " + _).getOrElse("") +
-        higher.map("upper bounded by: " + _).getOrElse("")
+        lower.map(l => "lower bounded by: " + describe(l)).getOrElse("") +
+          higher.map(h => "upper bounded by: " + describe(h)).getOrElse("")
       }
 
       case Type.Param(mods, name, tparams, tbounds, vbounds, cbounds) => {
@@ -63,31 +67,32 @@ object Describe {
           if (vbounds.nonEmpty) vbounds.map(describe).mkString("view bounded by: ", ",", ".")
           else ""
 
-        val cboundsRes = 
+        val cboundsRes =
           if (cbounds.nonEmpty) cbounds.map(describe).mkString("context bounded by: ", ",", ".")
           else ""
 
-        val tparamsRes = 
-          tparams match {
-            case List(Type.Param(Nil, Name.Anonymous(), Nil, Type.Bounds(None, None), Nil, Nil)) => ",higher kinded,"
-            case _ if tparams.size >= 1 => tparams.map(describe).mkString("of", ",", "")
-            case _ => ""
-          }
+        val tparamsRes =
+          if (tparams.nonEmpty) tparams.map(describe).mkString("of", ",", "")
+          else ""
 
-        s"${join(mods)} ${describe(name)} $tparamsRes ${describe(tbounds)} $vboundsRes $cboundsRes"
+        List(
+          join(mods),
+          describe(name),
+          tparamsRes,
+          describe(tbounds),
+          vboundsRes,
+          cboundsRes
+        ).filter(_.nonEmpty).mkString(" ")
       }
 
-      case Mod.Covariant() => "covariant"
+      case Mod.Covariant()     => "covariant"
       case Mod.Contravariant() => "contravariant"
 
       case e => ""
-        // e.syntax
+      // e.syntax
     }
 
-  private def join(args: List[Tree]): String = 
+  private def join(args: List[Tree]): String =
     args.map(describe).mkString(", ")
 }
-
-
 // class TreeMap, parametrized with: A view bound to Comparable of A, B
-

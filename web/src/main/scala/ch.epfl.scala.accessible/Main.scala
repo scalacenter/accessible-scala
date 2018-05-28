@@ -88,7 +88,7 @@ object Main {
         val nextCursor = action(cursor)
         setSel(editor, nextCursor.current)
         val summary = Describe(nextCursor.tree)
-        
+
         if (summary.nonEmpty) {
           println(summary)
           speak(summary, punctuation = false)
@@ -215,7 +215,7 @@ object Main {
       }
     })
 
-    val defaultCode = 
+    val defaultCode =
       """|class A {
          |  val a = 1
          |  val b = 2
