@@ -12,15 +12,6 @@ object Main {
 
     val Mespeak = Globals.meSpeak
 
-    Mespeak.speakMultipart(
-      js.Array(
-        new SpeakPart { override val text = "foo Int, foo Char"; override val pitch = 50},
-        new SpeakPart { override val text = "bar String."; override val pitch = 20},
-        new SpeakPart { override val text = "buzz Char."; override val pitch = 50},
-      ),
-      new SpeakOptions { override val speed = 200 }      
-    )
-
     var speechOn = true
     def speak(utterance: String, force: Boolean = false, punctuation: Boolean = true): Unit = {
       if (speechOn || force) {

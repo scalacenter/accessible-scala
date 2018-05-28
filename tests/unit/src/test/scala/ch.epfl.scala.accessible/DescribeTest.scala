@@ -8,10 +8,13 @@ import scala.meta.parsers.Parse
 object DescribeTests extends FunSuite with DiffAssertions {
 
   check("class A[_ <: M[_, _]]",
-        "class A parametrized with: upper bounded by: M taking 2 parameters")
+        "class A parametrized with: parameter upper bounded by: M taking 2 parameters")
+  
   check("def f[T >: A <: B]",
         "def f parametrized with: T lower bounded by: A, upper bounded by: B.\nreturns Unit")
-  check("def sum(args: Int*): Int", "def sum args repeated Int.\nreturns Int")
+
+  check("def sum(args: Int*): Int", 
+        "def sum args repeated: Int.\nreturns Int")
 
   def check(source: String, expected: String): Unit =
     check(source, expected, Parse.parseStat)

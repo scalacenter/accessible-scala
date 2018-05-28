@@ -31,22 +31,30 @@ object Describe {
         s"${join(mods)} class ${describe(name)} $tparamsRes ${describe(ctor)} ${describe(templ)}"
       }
 
-      // case Template(early: List[Stat], inits: List[Init], self: Self, stats: List[Stat])
+      // Template(early: List[Stat], inits: List[Init], self: Self, stats: List[Stat])
       case Template(early, inits, self, stats) => ""
-      // "template"
 
-      // case Ctor.Primary(mods: List[Mod], name: Name, paramss: List[List[Term.Param]]) =>
+      // Ctor.Primary(mods: List[Mod], name: Name, paramss: List[List[Term.Param]]) =>
       case Ctor.Primary(mods, _, paramss) => ""
-      // "constructor"
+
+      case Term.Name(value) => value
+
+      case Term.Param(mods, name, decltpe, default) =>
+        List(
+          join(mods),
+          describe(name),
+          decltpe.map(describe).getOrElse(""),
+          default.map(describe).getOrElse("")
+        ).filter(_.nonEmpty).mkString(" ")
 
       case Type.Name(value)         => value
-      case Term.Name(value)         => value
       case Type.Project(qual, name) => s"${describe(qual)}, project, ${describe(name)}"
       case Type.Singleton(ref)      => s"singleton ${describe(ref)}"
       case Type.Apply(tpt, args) =>
-        if (args.forall { case Type.Placeholder(Type.Bounds(None, None)) => true; case _ => false }) {
-          s"${describe(tpt)} taking ${args.size} parameters"
-        } else s"${describe(tpt)} of " + join(args)
+        val allPlaceholders = args.forall { case Type.Placeholder(Type.Bounds(None, None)) => true; case _ => false }
+
+        if (allPlaceholders) s"${describe(tpt)} taking ${args.size} parameters"
+        else s"${describe(tpt)} of " + join(args)
 
       case Type.Tuple(args) => s"tuple ${args.size} of " + join(args)
       case Type.Function(params, res) => {
@@ -64,6 +72,9 @@ object Describe {
         ).filter(_.nonEmpty).mkString(", ")
       }
 
+      case Type.Repeated(tpe) =>
+        "repeated: " + describe(tpe)
+
       case Type.Param(mods, name, tparams, tbounds, vbounds, cbounds) => {
 
         val vboundsRes =
@@ -78,9 +89,13 @@ object Describe {
           if (tparams.nonEmpty) tparams.map(describe).mkString("of", ",", "")
           else ""
 
+        val nameRes = 
+          if (name.is[Name.Anonymous]) "parameter"
+          else describe(name)
+
         List(
           join(mods),
-          describe(name),
+          nameRes,
           tparamsRes,
           describe(tbounds),
           vboundsRes,
@@ -97,7 +112,10 @@ object Describe {
       case Mod.Covariant()     => "co-variant"
       case Mod.Contravariant() => "contra-variant"
 
-      case e => ""
+      case Name.Anonymous() => ???
+
+      case e => e.getClass.toString
+      // "_e_"
       // e.syntax
     }
 
@@ -113,7 +131,7 @@ object Describe {
       else ""
 
     val paramssRes =
-      if (paramss.nonEmpty) ""
+      if (paramss.nonEmpty) paramss.flatMap(_.map(describe)).mkString(", ")
       else ""
 
     List(
