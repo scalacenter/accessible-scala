@@ -9,9 +9,17 @@ import scala.meta._
 object Main {
   def main(args: Array[String]): Unit = {
     import CodeMirrorExtensions._
-    // import Mespeak._
-    Mespeak.loadConfig(MespeakConfig)
-    Mespeak.loadVoice(`en/en-us`)
+
+    val Mespeak = Globals.meSpeak
+
+    Mespeak.speakMultipart(
+      js.Array(
+        new SpeakPart { override val text = "foo Int, foo Char"; override val pitch = 50},
+        new SpeakPart { override val text = "bar String."; override val pitch = 20},
+        new SpeakPart { override val text = "buzz Char."; override val pitch = 50},
+      ),
+      new SpeakOptions { override val speed = 200 }      
+    )
 
     var speechOn = true
     def speak(utterance: String, force: Boolean = false, punctuation: Boolean = true): Unit = {
@@ -24,10 +32,10 @@ object Main {
       }
     }
 
-    Mespeak.speak("Welcome to accessible-scaa-laa demo!", new SpeakOptions {
-      override val speed = 300
-    })
-    console.log("Welcome to accessible-scaa-laa demo!")
+    // Mespeak.speak("Welcome to accessible-scaa-laa demo!", new SpeakOptions {
+    //   override val speed = 300
+    // })
+    // console.log("Welcome to accessible-scaa-laa demo!")
 
     CLike
     Sublime

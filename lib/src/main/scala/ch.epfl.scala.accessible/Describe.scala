@@ -40,6 +40,7 @@ object Describe {
       // "constructor"
 
       case Type.Name(value)         => value
+      case Term.Name(value)         => value
       case Type.Project(qual, name) => s"${describe(qual)}, project, ${describe(name)}"
       case Type.Singleton(ref)      => s"singleton ${describe(ref)}"
       case Type.Apply(tpt, args) =>
@@ -57,8 +58,10 @@ object Describe {
       }
 
       case Type.Bounds(lower, higher) => {
-        lower.map(l => "lower bounded by: " + describe(l)).getOrElse("") +
+        List(
+          lower.map(l => "lower bounded by: " + describe(l)).getOrElse(""),
           higher.map(h => "upper bounded by: " + describe(h)).getOrElse("")
+        ).filter(_.nonEmpty).mkString(", ")
       }
 
       case Type.Param(mods, name, tparams, tbounds, vbounds, cbounds) => {
@@ -85,12 +88,46 @@ object Describe {
         ).filter(_.nonEmpty).mkString(" ")
       }
 
-      case Mod.Covariant()     => "covariant"
-      case Mod.Contravariant() => "contravariant"
+      case Defn.Def(mods, name, tparams, paramss, decltpe, body) =>
+        dDef(mods, name, tparams, paramss, decltpe, Some(body))
+
+      case Decl.Def(mods, name, tparams, paramss, decltpe) =>
+        dDef(mods, name, tparams, paramss, Some(decltpe), None)
+
+      case Mod.Covariant()     => "co-variant"
+      case Mod.Contravariant() => "contra-variant"
 
       case e => ""
       // e.syntax
     }
+
+  private def dDef(mods: List[Mod],
+                   name: Term.Name,
+                   tparams: List[scala.meta.Type.Param],
+                   paramss: List[List[Term.Param]],
+                   decltpe: Option[scala.meta.Type],
+                   body: Option[Term]): String = {
+
+    val tparamsRes =
+      if (tparams.nonEmpty) tparams.map(describe).mkString("parametrized with: ", ",", "")
+      else ""
+
+    val paramssRes =
+      if (paramss.nonEmpty) ""
+      else ""
+
+    List(
+      join(mods),
+      "def",
+      describe(name),
+      tparamsRes,
+      paramssRes
+    ).filter(_.nonEmpty).mkString(" ") +
+      List(
+        decltpe.map(tpe => ".\nreturns " + describe(tpe)).getOrElse(""),
+        body.map(describe).getOrElse(""),
+      ).filter(_.nonEmpty).mkString(" ")
+  }
 
   private def join(args: List[Tree]): String =
     args.map(describe).mkString(", ")
