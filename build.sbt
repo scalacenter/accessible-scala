@@ -1,8 +1,7 @@
 import sbtcrossproject.{crossProject, CrossType}
+import scala.sys.process._
 
 lazy val metaV = "3.7.4"
-
-lazy val deployWeb = taskKey[Unit]("Deploy web demo")
 
 val pluginPath = Def.setting {
   (baseDirectory in ThisBuild).value / "plugins" / "sublime-text" / "accessible-scala"
@@ -106,20 +105,28 @@ lazy val webpackDir = Def.setting { (sourceDirectory in ThisProject).value / "we
 lazy val webpackDevConf = Def.setting { Some(webpackDir.value / "webpack-dev.config.js") }
 lazy val webpackProdConf = Def.setting { Some(webpackDir.value / "webpack-prod.config.js") }
 
+lazy val webpackSettings = Seq(
+  scalacOptions += "-P:scalajs:sjsDefinedByDefault",
+  useYarn := true,
+  version in webpack := "3.5.5",
+  version in startWebpackDevServer := "2.7.1",
+  webpackConfigFile in fastOptJS := webpackDevConf.value,
+  webpackConfigFile in fullOptJS := webpackProdConf.value,
+  webpackMonitoredDirectories += (resourceDirectory in Compile).value,
+  includeFilter in webpackMonitoredFiles := "*",
+  webpackResources := webpackDir.value * "*.js",
+  webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly(),
+  webpackBundlingMode in fullOptJS := BundlingMode.Application,
+)
+
+lazy val deployWeb = taskKey[Unit]("Deploy web demo")
+def deployWebTask: Def.Initialize[Task[Unit]] = Def.task {
+  // todo manual steps
+}
+
 lazy val web = project
   .in(file("web"))
   .settings(
-    scalacOptions += "-P:scalajs:sjsDefinedByDefault",
-    useYarn := true,
-    version in webpack := "3.5.5",
-    version in startWebpackDevServer := "2.7.1",
-    webpackConfigFile in fastOptJS := webpackDevConf.value,
-    webpackConfigFile in fullOptJS := webpackProdConf.value,
-    webpackMonitoredDirectories += (resourceDirectory in Compile).value,
-    includeFilter in webpackMonitoredFiles := "*",
-    webpackResources := webpackDir.value * "*.js",
-    webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly(),
-    webpackBundlingMode in fullOptJS := BundlingMode.Application,
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % "0.9.5"
     ),
@@ -148,4 +155,20 @@ lazy val web = project
   .dependsOn(libJS)
   .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin)
 
-def deployWebTask: Def.Initialize[Task[Unit]] = Def.task {}
+lazy val open = taskKey[Unit]("open vscode")
+def openVSCodeTask: Def.Initialize[Task[Unit]] = Def.task {
+  val path = baseDirectory.value.getCanonicalPath
+  val log = streams.value.log
+
+  s"code --extensionDevelopmentPath=$path" ! log
+}
+
+lazy val vscode = project
+  .in(file("vscode"))
+  .settings(
+    scalacOptions += "-P:scalajs:sjsDefinedByDefault",
+    scalaJSModuleKind := ModuleKind.CommonJSModule,
+    artifactPath in (Compile, fastOptJS) := baseDirectory.value / "out" / "extension.js",
+    open := openVSCodeTask.dependsOn(fastOptJS in Compile).value
+  )
+  .enablePlugins(ScalaJSPlugin)
