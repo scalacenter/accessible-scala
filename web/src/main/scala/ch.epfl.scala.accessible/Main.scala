@@ -14,9 +14,12 @@ object Main {
 
     var speechOn = true
     def speak(utterance: String, force: Boolean = false, punctuation: Boolean = true): Unit = {
+      // limit to 100 chars to avoid hanging the browser
+      val limit = 100
+
       if (speechOn || force) {
         Mespeak.stop()
-        Mespeak.speak(utterance, new SpeakOptions {
+        Mespeak.speak(utterance.take(limit), new SpeakOptions {
           override val speed = 250
           override val punct = punctuation
         })
@@ -89,7 +92,6 @@ object Main {
         val summary = Describe(nextCursor.tree)
 
         if (summary.nonEmpty) {
-          println(summary)
           speak(summary, punctuation = false)
         } else {
           // fallback to selected text
