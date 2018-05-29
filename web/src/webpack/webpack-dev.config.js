@@ -46,6 +46,7 @@ const Web = Merge(Common.Web, {
     new Webpack.HotModuleReplacementPlugin(),
     new HtmlWebpackPlugin({
       filename: "index.html",
+      inject: "head",
       chunks: ["app"],
       template: Path.resolve(Common.resourcesDir, './index.html'),
     })

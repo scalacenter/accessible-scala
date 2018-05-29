@@ -4,41 +4,25 @@ import scala.scalajs.js
 import scala.scalajs.js.{UndefOr, |}
 import scala.scalajs.js.annotation._
 
-trait Voice extends js.Object
-
 @js.native
-@JSImport("mespeak/voices/en/en-us.json", JSImport.Namespace)
-object `en/en-us` extends Voice
+@JSGlobalScope
+object Globals extends js.Object {
+  val meSpeak: Mespeak = js.native
+}
 
-trait Config extends js.Object
-
-@js.native
-@JSImport("mespeak/src/mespeak_config.json", JSImport.Namespace)
-object MespeakConfig extends Config
-
-@js.native
-@JSImport("mespeak", JSImport.Namespace)
-object Mespeak extends js.Object {
-  def canPlay(): Boolean = js.native
-  def getDefaultVoice(): String = js.native
-  def getVolume(): Double = js.native // [0, 1]
-  def isConfigLoaded(): Boolean = js.native
-  def isVoiceLoaded(): Boolean = js.native
-  def loadConfig(config: Config): Unit = js.native
-  def loadVoice(voice: Voice): Unit = js.native
-  def play(): Long = js.native
-  def resetQueue(): Unit = js.native
-  def setDefaultVoice(): Unit = js.native
-  def setVolume(volume: Double): Unit = js.native
-  def speak(text: String,
-            args: SpeakOptions = js.native,
-            callback: Boolean => Unit = js.native,
-            _id: Long = js.native): Long = js.native
-  def speakMultipart(parts: Array[SpeakPart],
-                     args: SpeakOptions = js.native,
-                     callback: Boolean => Unit = js.native,
-                     _id: Long = js.native): Long = js.native
-  def stop(id: UndefOr[Long] = js.native): Unit = js.native
+trait Mespeak extends js.Object {
+  def canPlay(): Boolean
+  def getDefaultVoice(): String
+  def getVolume(): Double //[0, 1]
+  def isConfigLoaded(): Boolean
+  def isVoiceLoaded(): Boolean
+  def play(): Long
+  def resetQueue(): Unit
+  def setDefaultVoice(): Unit
+  def setVolume(volume: Double): Unit
+  def speak(text: String, args: SpeakOptions): Long
+  def speakMultipart(parts: js.Array[SpeakPart], args: SpeakOptions): Long
+  def stop(): Unit
 }
 
 trait SpeakPart extends SpeakOptions {
@@ -49,7 +33,6 @@ trait SpeakOptions extends js.Object {
   val amplitude: UndefOr[Int] = js.undefined
   val pitch: UndefOr[Int] = js.undefined
   val speed: UndefOr[Int] = js.undefined
-  val voice: UndefOr[Voice] = js.undefined
   val wordgap: UndefOr[Int] = js.undefined
   val variant: UndefOr[String] = js.undefined
   val linebreak: UndefOr[Int] = js.undefined
