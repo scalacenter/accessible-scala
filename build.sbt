@@ -105,18 +105,10 @@ lazy val webpackDir = Def.setting { (sourceDirectory in ThisProject).value / "we
 lazy val webpackDevConf = Def.setting { Some(webpackDir.value / "webpack-dev.config.js") }
 lazy val webpackProdConf = Def.setting { Some(webpackDir.value / "webpack-prod.config.js") }
 
-lazy val webpackSettings = Seq(
+lazy val scalajsSettings = Seq(
   scalacOptions += "-P:scalajs:sjsDefinedByDefault",
   useYarn := true,
   version in webpack := "3.5.5",
-  version in startWebpackDevServer := "2.7.1",
-  webpackConfigFile in fastOptJS := webpackDevConf.value,
-  webpackConfigFile in fullOptJS := webpackProdConf.value,
-  webpackMonitoredDirectories += (resourceDirectory in Compile).value,
-  includeFilter in webpackMonitoredFiles := "*",
-  webpackResources := webpackDir.value * "*.js",
-  webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly(),
-  webpackBundlingMode in fullOptJS := BundlingMode.Application,
 )
 
 lazy val deployWeb = taskKey[Unit]("Deploy web demo")
@@ -126,6 +118,7 @@ def deployWebTask: Def.Initialize[Task[Unit]] = Def.task {
 
 lazy val web = project
   .in(file("web"))
+  .settings(scalajsSettings)
   .settings(
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % "0.9.5"
@@ -150,9 +143,17 @@ lazy val web = project
       "webpack-merge" -> "4.1.0"
     ),
     scalaJSUseMainModuleInitializer := true,
-    deployWeb := deployWebTask.dependsOn(webpack in (Compile, fullOptJS)).value
+    deployWeb := deployWebTask.dependsOn(webpack in (Compile, fullOptJS)).value,
+    version in startWebpackDevServer := "2.7.1",
+    webpackConfigFile in fastOptJS := webpackDevConf.value,
+    webpackConfigFile in fullOptJS := webpackProdConf.value,
+    webpackMonitoredDirectories += (resourceDirectory in Compile).value,
+    includeFilter in webpackMonitoredFiles := "*",
+    webpackResources := webpackDir.value * "*.js",
+    webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly(),
+    webpackBundlingMode in fullOptJS := BundlingMode.Application,
   )
-  .dependsOn(libJS)
+  .dependsOn(libJS, mespeak)
   .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin)
 
 lazy val open = taskKey[Unit]("open vscode")
@@ -165,10 +166,23 @@ def openVSCodeTask: Def.Initialize[Task[Unit]] = Def.task {
 
 lazy val vscode = project
   .in(file("vscode"))
+  .settings(scalajsSettings)
   .settings(
     scalacOptions += "-P:scalajs:sjsDefinedByDefault",
     scalaJSModuleKind := ModuleKind.CommonJSModule,
     artifactPath in (Compile, fastOptJS) := baseDirectory.value / "out" / "extension.js",
     open := openVSCodeTask.dependsOn(fastOptJS in Compile).value
   )
+  .dependsOn(libJS, mespeak)
   .enablePlugins(ScalaJSPlugin)
+
+lazy val mespeak = project
+  .in(file("mespeak"))
+  .settings(scalajsSettings)
+  .settings(
+    npmDependencies in Compile ++= Seq(
+      "mespeak" -> "2.0.2"
+    ),
+    scalacOptions += "-P:scalajs:sjsDefinedByDefault",
+  )
+  .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin)

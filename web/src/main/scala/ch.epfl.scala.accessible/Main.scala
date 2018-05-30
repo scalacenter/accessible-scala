@@ -9,8 +9,9 @@ import scala.meta._
 object Main {
   def main(args: Array[String]): Unit = {
     import CodeMirrorExtensions._
+    Mespeak.loadConfig(MespeakConfig)
+    Mespeak.loadVoice(`en/en-us`)
 
-    val Mespeak = Globals.meSpeak
 
     var speechOn = true
     def speak(utterance: String, force: Boolean = false, punctuation: Boolean = true): Unit = {
@@ -26,9 +27,9 @@ object Main {
       }
     }
 
-    // Mespeak.speak("Welcome to accessible-scaa-laa demo!", new SpeakOptions {
-    //   override val speed = 300
-    // })
+    Mespeak.speak("Welcome to accessible-scaa-laa demo!", new SpeakOptions {
+      override val speed = 300
+    })
     // console.log("Welcome to accessible-scaa-laa demo!")
 
     CLike

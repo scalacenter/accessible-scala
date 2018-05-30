@@ -14,6 +14,12 @@ trait Window extends js.Object {
 object VscodeExtension {
   @JSExportTopLevel("activate")
   def activate(): Unit = {
-    vscode.window.showInformationMessage("Hello, World!")
+    Mespeak.loadConfig(MespeakConfig)
+    Mespeak.loadVoice(`en/en-us`)
+    val message = "Welcome to accessible-scaa-laa demo!"
+    vscode.window.showInformationMessage(message)
+    Mespeak.speak(message, new SpeakOptions {
+      override val speed = 300
+    })
   }
 }
