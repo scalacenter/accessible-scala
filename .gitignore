@@ -5,5 +5,6 @@ tests/slow/repos.tar.gz
 plugins/sublime-text/accessible-scala/ascala.jar
 plugins/sublime-text/accessible-scala/bin
 plugins/sublime-text/accessible-scala/build
-vscode/out
+vscode/out/extension.js
+vscode/out/extension.js.map
 vscode/node_modules

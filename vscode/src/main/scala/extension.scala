@@ -7,12 +7,14 @@ import scala.scalajs.js.annotation._
 
 import scala.meta._
 
-object extension {
+@js.native
+@JSImport("./tts.js", JSImport.Namespace)
+object tts extends js.Object {
+  def speak(utterance: String): Unit = js.native
+  def cancel(): Unit = js.native
+}
 
-  def speak(utterance: String): Unit = {
-    // todo
-    // vscode.window.showInformationMessage(utterance)
-  }
+object extension {
 
   def runCursor(action: Cursor => Cursor): js.Function = () => {
     withTree((tree, range) => {
@@ -23,19 +25,21 @@ object extension {
       val summary = Describe(nextCursor.tree)
 
       if (summary.nonEmpty) {
-        speak(summary)
+        tts.speak(summary)
       } else {
         // fallback to selected text
-        val range = nextCursor.current
+        // val range = nextCursor.current
 
-        val editor = vscode.window.activeTextEditor
-        val document = editor.document
+        // val editor = vscode.window.activeTextEditor
+        // val document = editor.document
 
-        val start = document.positionAt(range.start)
-        val end = document.positionAt(range.end)
+        // val start = document.positionAt(range.start)
+        // val end = document.positionAt(range.end)
 
-        val output = document.getText(new _root_.vscode.Range(start, end))
-        speak(output)
+        // val output = document.getText(new _root_.vscode.Range(start, end))
+        // tts.speak(output)
+
+        
       }
     })
   }
@@ -55,7 +59,7 @@ object extension {
       }
       case Parsed.Error(pos, message, _) => {
         val range = Range(pos.start, pos.end)
-        speak(message)
+        tts.speak(message)
         setSel(range)
       }
     }
@@ -71,6 +75,11 @@ object extension {
 
   @JSExportTopLevel("activate")
   def activate(context: ExtensionContext): Unit = {
+
+    tts.speak("this is too long")
+    tts.speak("yes it is")
+    tts.speak("more text")
+
     val commands = List(
       ("goLeft",  runCursor(_.left)),
       ("goRight", runCursor(_.right)),

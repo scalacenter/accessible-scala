@@ -156,7 +156,8 @@ object Describe {
       // // Todo
       // class Existential(tpe: Type, stats: List[Stat])
 
-      case e => e.syntax
+      // case e => e.syntax
+      case _ => ""
     }
 
   private def dDef(mods: List[Mod],
