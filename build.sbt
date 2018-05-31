@@ -173,7 +173,7 @@ lazy val vscode = project
     artifactPath in (Compile, fastOptJS) := baseDirectory.value / "out" / "extension.js",
     open := openVSCodeTask.dependsOn(fastOptJS in Compile).value
   )
-  .dependsOn(libJS, mespeak)
+  .dependsOn(libJS)
   .enablePlugins(ScalaJSPlugin)
 
 lazy val mespeak = project

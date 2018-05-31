@@ -6,3 +6,4 @@ plugins/sublime-text/accessible-scala/ascala.jar
 plugins/sublime-text/accessible-scala/bin
 plugins/sublime-text/accessible-scala/build
 vscode/out
+vscode/node_modules
