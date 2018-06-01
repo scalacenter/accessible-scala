@@ -1,7 +1,4 @@
-[![Travis Build Status](https://travis-ci.org/scalacenter/accessible-scala.svg?branch=master)](https://travis-ci.org/scalacenter/accessible-scala)
-<!-- [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/u7o2296k904lnwyc/branch/master?svg=true)](https://ci.appveyor.com/project/scalacenter/accessible-scala/branch/master) -->
-[![codecov.io](http://codecov.io/github/scalacenter/accessible-scala/coverage.svg?branch=master)](http://codecov.io/github/scalacenter/accessible-scala?branch=master)
-[![Join the chat at https://gitter.im/scalacenter/accessible-scala](https://badges.gitter.im/scalacenter/accessible-scala.svg)](https://gitter.im/scalacenter/accessible-scala)
+[![Travis Build Status](https://travis-ci.org/MasseGuillaume/accessible-scala.svg?branch=master)](https://travis-ci.org/scalacenter/accessible-scala)[![codecov](https://codecov.io/gh/MasseGuillaume/accessible-scala/branch/master/graph/badge.svg)](https://codecov.io/gh/MasseGuillaume/accessible-scala)[![Join the chat at https://gitter.im/scalacenter/accessible-scala](https://badges.gitter.im/scalacenter/accessible-scala.svg)](https://gitter.im/scalacenter/accessible-scala)
 ========
 
 # Accessible Scala

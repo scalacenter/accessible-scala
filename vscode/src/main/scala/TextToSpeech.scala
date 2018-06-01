@@ -32,7 +32,10 @@ object say extends js.Object {
 
 class SayJs() extends TextToSpeech {
   def stop(): Unit = say.stop()
-  def speak(utterance: String) = say.speak(utterance)
+  def speak(utterance: String) = {
+    say.stop()
+    say.speak(utterance)
+  }
 }
 
 // say does not support espeak: https://github.com/Marak/say.js/issues/14
