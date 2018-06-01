@@ -9,4 +9,4 @@ if [ ! -f $VSCE ]; then
   popd
 fi
 
-$VSCE
+$VSCE "$@"
