@@ -1,0 +1,50 @@
+{
+  "name": "accessible-scala",
+  "description": "Scala support for blind and partially-sighted developers",
+  "version": "0.1.1",
+  "keywords": [
+    "scala",
+    "accessibility"
+  ],
+  "publisher": "scala-center",
+  "contributors": [
+    {
+      "name": "Guillaume Massé",
+      "url": "https://github.com/MasseGuillaume"
+    }
+  ],
+  "bugs": {
+    "url": "https://github.com/scalacenter/accessible-scala/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scalacenter/accessible-scala.git"
+  },
+  "homepage": "https://masseguillaume.github.io/accessible-scala-web/",
+  "license": "Apache-2.0",
+  "engines": {
+    "vscode": "^1.15.0"
+  },
+  "icon": "logo.png",
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:scala"
+  ],
+  "main": "./out/extension",
+  "dependencies": {
+    "say": "0.14.0"
+  },
+  "devDependencies": {
+    "vscode": "^1.1.17"
+  },
+  "contributes": {
+    "keybindings": [
+      { "command": "accessibleScala.goLeft",  "key": "alt+left" , "when": "editorTextFocus" },
+      { "command": "accessibleScala.goRight", "key": "alt+right", "when": "editorTextFocus" },
+      { "command": "accessibleScala.goUp",    "key": "alt+up"   , "when": "editorTextFocus" },
+      { "command": "accessibleScala.goDown",  "key": "alt+down" , "when": "editorTextFocus" }
+    ]
+  }
+}

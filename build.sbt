@@ -1,11 +1,10 @@
 import sbtcrossproject.{crossProject, CrossType}
+import scala.sys.process._
 
 lazy val metaV = "3.7.4"
 
-lazy val deployWeb = taskKey[Unit]("Deploy web demo")
-
 val pluginPath = Def.setting {
-  (baseDirectory in ThisBuild).value / "plugins" / "sublime-text" / "accessible-scala"
+  (baseDirectory in ThisBuild).value / "sublime-text" / "accessible-scala"
 }
 
 val libraryPath = Def.setting {
@@ -61,18 +60,12 @@ lazy val testsShared = project
       "org.scalameta" %% "testkit" % metaV
     )
   )
-  .dependsOn(libJVM) //, espeak)
+  .dependsOn(libJVM)
 
 lazy val forkTest = Seq(
   cancelable in Global := true,
   Test / fork := true,
   Test / javaOptions += libraryPath.value
-  // fork in testOnly := true,
-  // fork in testQuick := true,
-  // fork in test := true,
-  // javaOptions in test += ,
-  // javaOptions in testOnly ++= (javaOptions in test).value,
-  // javaOptions in testQuick ++= (javaOptions in test).value
 )
 
 lazy val unit = project
@@ -106,20 +99,29 @@ lazy val webpackDir = Def.setting { (sourceDirectory in ThisProject).value / "we
 lazy val webpackDevConf = Def.setting { Some(webpackDir.value / "webpack-dev.config.js") }
 lazy val webpackProdConf = Def.setting { Some(webpackDir.value / "webpack-prod.config.js") }
 
+lazy val scalajsSettings = Seq(
+  scalacOptions += "-P:scalajs:sjsDefinedByDefault",
+  useYarn := true,
+  version in webpack := "3.5.5",
+)
+
+lazy val deployWeb = taskKey[Unit]("Deploy web demo")
+def deployWebTask: Def.Initialize[Task[Unit]] = Def.task {
+  // todo manual steps
+  // created GitHub repo at https://github.com/MasseGuillaume/accessible-scala-web
+  // activated GitHub Pages at https://github.com/MasseGuillaume/accessible-scala-web/settings
+  // master branch
+
+  // cd ..
+  // cd accessible-scala-web
+  // git commit -am "."
+  // git push origin master
+}
+
 lazy val web = project
   .in(file("web"))
+  .settings(scalajsSettings)
   .settings(
-    scalacOptions += "-P:scalajs:sjsDefinedByDefault",
-    useYarn := true,
-    version in webpack := "3.5.5",
-    version in startWebpackDevServer := "2.7.1",
-    webpackConfigFile in fastOptJS := webpackDevConf.value,
-    webpackConfigFile in fullOptJS := webpackProdConf.value,
-    webpackMonitoredDirectories += (resourceDirectory in Compile).value,
-    includeFilter in webpackMonitoredFiles := "*",
-    webpackResources := webpackDir.value * "*.js",
-    webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly(),
-    webpackBundlingMode in fullOptJS := BundlingMode.Application,
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % "0.9.5"
     ),
@@ -143,9 +145,41 @@ lazy val web = project
       "webpack-merge" -> "4.1.0"
     ),
     scalaJSUseMainModuleInitializer := true,
-    deployWeb := deployWebTask.dependsOn(webpack in (Compile, fullOptJS)).value
+    deployWeb := deployWebTask.dependsOn(webpack in (Compile, fullOptJS)).value,
+    version in startWebpackDevServer := "2.7.1",
+    webpackConfigFile in fastOptJS := webpackDevConf.value,
+    webpackConfigFile in fullOptJS := webpackProdConf.value,
+    webpackMonitoredDirectories += (resourceDirectory in Compile).value,
+    includeFilter in webpackMonitoredFiles := "*",
+    webpackResources := webpackDir.value * "*.js",
+    webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly(),
+    webpackBundlingMode in fullOptJS := BundlingMode.Application,
   )
   .dependsOn(libJS)
   .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin)
 
-def deployWebTask: Def.Initialize[Task[Unit]] = Def.task {}
+lazy val open = taskKey[Unit]("open vscode")
+def openVSCodeTask: Def.Initialize[Task[Unit]] = Def.task {
+  val base = baseDirectory.value
+  val log = streams.value.log
+
+  val path = base.getCanonicalPath
+
+  if (!(base / "node_module").exists) {
+    "yarn" ! log
+  }
+
+  s"code --extensionDevelopmentPath=$path" ! log
+}
+
+lazy val vscode = project
+  .in(file("vscode"))
+  .settings(scalajsSettings)
+  .settings(
+    scalacOptions += "-P:scalajs:sjsDefinedByDefault",
+    scalaJSModuleKind := ModuleKind.CommonJSModule,
+    artifactPath in (Compile, fastOptJS) := baseDirectory.value / "out" / "extension.js",
+    open := openVSCodeTask.dependsOn(fastOptJS in Compile).value
+  )
+  .dependsOn(libJS)
+  .enablePlugins(ScalaJSPlugin)
