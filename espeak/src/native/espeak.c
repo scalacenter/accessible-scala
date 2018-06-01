@@ -20,22 +20,38 @@ JNIEXPORT void JNICALL Java_ch_epfl_scala_accessible_espeak_Espeak_nativeSynthes
 
   const char *c_text = text ? (*env)->GetStringUTFChars(env, text, NULL) : NULL;
   unsigned int unique_identifier;
-  espeak_Synth(
+
+  const espeak_ERROR result = 
+    espeak_Synth(
       c_text,
-      strlen(c_text),
-      0,
+      strlen(c_text) + 1,
+      0,  // position
       POS_CHARACTER,
-      0,
+      0, // end position
       espeakCHARS_UTF8,
       &unique_identifier,
-      NULL
-  );
-  espeak_Synchronize();
+      object
+    );
+
+  if (c_text) (*env)->ReleaseStringUTFChars(env, text, c_text);
+
+  switch (result) {
+    case EE_OK:             break;
+    case EE_INTERNAL_ERROR: printf("espeak_Synth: internal error.\n"); break;
+    case EE_BUFFER_FULL:    printf("espeak_Synth: buffer full.\n"); break;
+    case EE_NOT_FOUND:      printf("espeak_Synth: not found.\n"); break;
+  }
   return;
 }
 
 JNIEXPORT void JNICALL Java_ch_epfl_scala_accessible_espeak_Espeak_nativeStop
   (JNIEnv *env, jobject object) {
   espeak_Cancel();
+  return;
+}
+
+JNIEXPORT void JNICALL Java_ch_epfl_scala_accessible_espeak_Espeak_nativeSynchronize
+  (JNIEnv *env, jobject object) {
+  espeak_Synchronize();
   return;
 }

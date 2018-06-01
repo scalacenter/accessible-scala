@@ -1,0 +1,10 @@
+[
+  { "keys": ["ctrl+shift+s"], "command": "ascala_summary" },
+  { "keys": ["ctrl+shift+d"], "command": "ascala_describe" },
+  { "keys": ["ctrl+shift+b"], "command": "ascala_breadcrumbs" },
+
+  { "keys": ["alt+left"], "command": "ascala_left" },
+  { "keys": ["alt+right"], "command": "ascala_right" },
+  { "keys": ["alt+up"], "command": "ascala_up" },
+  { "keys": ["alt+down"], "command": "ascala_down" },
+]

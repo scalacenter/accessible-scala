@@ -1,0 +1,33 @@
+@import "~node_modules/firacode/distr/fira_code.css";
+@import "~node_modules/codemirror/lib/codemirror.css";
+@import "solarized";
+@include solarized();
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+.CodeMirror, .CodeMirror-scroll {
+  height: 100%;
+}
+
+$margin: 24px;
+.CodeMirror-lines {
+  padding: $margin;
+  .CodeMirror-linenumber{
+    margin-left: -$margin;
+  }
+}
+
+.CodeMirror-linewidget .line,
+.CodeMirror-linewidget .compilation-info,
+.CodeMirror-linewidget .runtime-error,
+.CodeMirror-widget .fold {
+  margin-left: -($margin + 4px);
+  width: calc(100% - #{$margin + 4px});
+}
+
+.cm-s-solarized .CodeMirror-cursor { 
+  border-left: 1px solid #819090; 
+}
