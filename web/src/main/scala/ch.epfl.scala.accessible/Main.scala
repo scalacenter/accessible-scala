@@ -12,7 +12,6 @@ object Main {
     Mespeak.loadConfig(MespeakConfig)
     Mespeak.loadVoice(`en/en-us`)
 
-
     var speechOn = true
     def speak(utterance: String, force: Boolean = false, punctuation: Boolean = true): Unit = {
       // limit to 100 chars to avoid hanging the browser

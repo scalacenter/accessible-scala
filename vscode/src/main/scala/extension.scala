@@ -1,20 +1,35 @@
-import scala.scalajs.js.annotation.JSExportTopLevel
-
 import ch.epfl.scala.accessible.{Cursor, Range, Describe}
-import _root_.vscode.{vscode, Selection, ExtensionContext}
-import scala.scalajs.js
-import scala.scalajs.js.annotation._
+
+import vscode.{Selection, ExtensionContext}
 
 import scala.meta._
 
-@js.native
-@JSImport("./tts.js", JSImport.Namespace)
-object tts extends js.Object {
-  def speak(utterance: String): Unit = js.native
-  def cancel(): Unit = js.native
-}
+import scala.scalajs.js
+import scala.scalajs.js.annotation.JSExportTopLevel
 
 object extension {
+  @JSExportTopLevel("activate")
+  def activate(context: ExtensionContext): Unit = {
+    val aScala = new AccessibleScala()
+
+    val commands = List(
+      ("goLeft", aScala.runCursor(_.left)),
+      ("goRight", aScala.runCursor(_.right)),
+      ("goUp", aScala.runCursor(_.up)),
+      ("goDown", aScala.runCursor(_.down))
+    )
+
+    commands.foreach {
+      case (name, fun) =>
+        context.subscriptions.push(
+          vscode.commands.registerCommand(s"accessibleScala.$name", fun)
+        )
+    }
+  }
+}
+
+class AccessibleScala() {
+  val tts = TextToSpeech()
 
   def runCursor(action: Cursor => Cursor): js.Function = () => {
     withTree((tree, range) => {
@@ -28,23 +43,21 @@ object extension {
         tts.speak(summary)
       } else {
         // fallback to selected text
-        // val range = nextCursor.current
+        val range = nextCursor.current
 
-        // val editor = vscode.window.activeTextEditor
-        // val document = editor.document
+        val editor = vscode.window.activeTextEditor
+        val document = editor.document
 
-        // val start = document.positionAt(range.start)
-        // val end = document.positionAt(range.end)
+        val start = document.positionAt(range.start)
+        val end = document.positionAt(range.end)
 
-        // val output = document.getText(new _root_.vscode.Range(start, end))
-        // tts.speak(output)
-
-        
+        val output = document.getText(new _root_.vscode.Range(start, end))
+        tts.speak(output)
       }
     })
   }
 
-  def withTree(f: (Tree, Range) => Unit): Unit = {
+  private def withTree(f: (Tree, Range) => Unit): Unit = {
     val editor = vscode.window.activeTextEditor
     val document = editor.document
     val code = document.getText()
@@ -65,32 +78,11 @@ object extension {
     }
   }
 
-  def setSel(pos: Range): Unit = {
+  private def setSel(pos: Range): Unit = {
     val editor = vscode.window.activeTextEditor
     val document = editor.document
     val start = document.positionAt(pos.start)
     val end = document.positionAt(pos.end)
     editor.selection = new Selection(start, end)
-  }
-
-  @JSExportTopLevel("activate")
-  def activate(context: ExtensionContext): Unit = {
-
-    tts.speak("this is too long")
-    tts.speak("yes it is")
-    tts.speak("more text")
-
-    val commands = List(
-      ("goLeft",  runCursor(_.left)),
-      ("goRight", runCursor(_.right)),
-      ("goUp",    runCursor(_.up)),
-      ("goDown",  runCursor(_.down))
-    )
-
-    commands.foreach{ case (name, fun) =>        
-      context.subscriptions.push(
-        vscode.commands.registerCommand(s"accessibleScala.$name", fun)
-      )
-    }
   }
 }

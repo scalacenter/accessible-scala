@@ -10,7 +10,11 @@ Scala is proudly a welcoming environment for all. One way to maintain and demons
 
 [SCP-016: Accessible Scala](https://github.com/scalacenter/advisoryboard/blob/master/proposals/016-verbal-descriptions.md)
 
+# Integrations
+
 # Web Demo
+
+install node and yarn
 
 ```scala
 web/fastOptJS::startWebpackDevServer
@@ -18,22 +22,45 @@ web/fastOptJS::startWebpackDevServer
 open http://localhost:8080
 ```
 
-## TODO:
+## Visual Studio Code
 
-* Basic Speech
-  * [X] on/off
-  * [X] char (left right)
-  * [X] word
-  * [X] typing
-  * [x] space
-  * [x] up/down read line
+install node and yarn
 
-  * [ ] delete
-  * [ ] begining/end of buffer
+```scala
+~vscode/open
+```
 
-* Email
+## Sublime Text
+
+install espeak or espeak-ng
+
+This plugin is not up-to-date compared to the web-demo or vscode.
+
+```bash
+# setup path to espeak lib
+export ESPEAK_LIB_PATH=/usr/lib/espeak
+
+pushd sublime-text
+./install.sh
+popd
+```
+
+## Emacspeak
+
+There is no integration for emacspeak yet. We would love to have your contribution!
+
+# Roadmap
+
+Describe:
+
+* Terms
+
+Cursor:
+
 * Term.Select chain is recursive (a.b.c => a.b => a)
 * Comments (licenses, commented out code)
 * Priority (def name over modifiers)
 
+Integrations:
 
+* emacspeak

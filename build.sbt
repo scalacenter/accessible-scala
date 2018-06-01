@@ -4,7 +4,7 @@ import scala.sys.process._
 lazy val metaV = "3.7.4"
 
 val pluginPath = Def.setting {
-  (baseDirectory in ThisBuild).value / "plugins" / "sublime-text" / "accessible-scala"
+  (baseDirectory in ThisBuild).value / "sublime-text" / "accessible-scala"
 }
 
 val libraryPath = Def.setting {
@@ -60,18 +60,12 @@ lazy val testsShared = project
       "org.scalameta" %% "testkit" % metaV
     )
   )
-  .dependsOn(libJVM) //, espeak)
+  .dependsOn(libJVM)
 
 lazy val forkTest = Seq(
   cancelable in Global := true,
   Test / fork := true,
   Test / javaOptions += libraryPath.value
-  // fork in testOnly := true,
-  // fork in testQuick := true,
-  // fork in test := true,
-  // javaOptions in test += ,
-  // javaOptions in testOnly ++= (javaOptions in test).value,
-  // javaOptions in testQuick ++= (javaOptions in test).value
 )
 
 lazy val unit = project
@@ -114,6 +108,14 @@ lazy val scalajsSettings = Seq(
 lazy val deployWeb = taskKey[Unit]("Deploy web demo")
 def deployWebTask: Def.Initialize[Task[Unit]] = Def.task {
   // todo manual steps
+  // created GitHub repo at https://github.com/MasseGuillaume/accessible-scala-web
+  // activated GitHub Pages at https://github.com/MasseGuillaume/accessible-scala-web/settings
+  // master branch
+
+  // cd ..
+  // cd accessible-scala-web
+  // git commit -am "."
+  // git push origin master
 }
 
 lazy val web = project
@@ -158,8 +160,14 @@ lazy val web = project
 
 lazy val open = taskKey[Unit]("open vscode")
 def openVSCodeTask: Def.Initialize[Task[Unit]] = Def.task {
-  val path = baseDirectory.value.getCanonicalPath
+  val base = baseDirectory.value
   val log = streams.value.log
+
+  val path = base.getCanonicalPath
+
+  if (!(base / "node_module").exists) {
+    "yarn" ! log
+  }
 
   s"code --extensionDevelopmentPath=$path" ! log
 }

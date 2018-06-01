@@ -4,19 +4,16 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation._
 
 @js.native
-@JSImport("vscode", JSImport.Namespace)
-object vscode extends js.Object {
-  val window: Window = js.native
-  val commands: Commands = js.native
+@JSImport("vscode", "window")
+object window extends js.Object {
+  def activeTextEditor: TextEditor = js.native
+  def showInformationMessage(message: String): Unit = js.native
 }
 
-trait Window extends js.Object {
-  def activeTextEditor: TextEditor
-  def showInformationMessage(message: String): Unit
-}
-
-trait Commands extends js.Object {
-  def registerCommand(command: String, callback: js.Function): Disposable
+@js.native
+@JSImport("vscode", "commands")
+object commands extends js.Object {
+  def registerCommand(command: String, callback: js.Function): Disposable = js.native
 }
 
 @js.native

@@ -65,7 +65,17 @@ object Describe {
         }
 
         if (allPlaceholders) s"${describe(tpt)} taking ${args.size} parameters"
-        else s"${describe(tpt)} of " + join(args)
+        else {
+          val verb =
+            if (args.size == 1) "of"
+            else "applied to"
+
+          List(
+            describe(tpt),
+            verb,
+            join(args)
+          ).filter(_.nonEmpty).mkString(" ")
+        }
 
       case Type.ApplyInfix(lhs, op, rhs) =>
         s"${describe(lhs)} ${describe(op)} ${describe(rhs)}"
