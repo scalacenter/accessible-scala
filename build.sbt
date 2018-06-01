@@ -172,6 +172,18 @@ def openVSCodeTask: Def.Initialize[Task[Unit]] = Def.task {
   s"code --extensionDevelopmentPath=$path" ! log
 }
 
+lazy val publishMarketplace = taskKey[Unit]("publish vscode extension to marketplace")
+def publishMarketplaceTask: Def.Initialize[Task[Unit]] = Def.task {
+  val ver = version.value
+  val log = streams.value.log
+  val pb =
+    new java.lang.ProcessBuilder("bash", "-c", "./vsce publish $ver")
+      .directory(file("vscode"))
+      .redirectErrorStream(true)
+
+  pb ! log
+}
+
 lazy val vscode = project
   .in(file("vscode"))
   .settings(scalajsSettings)
@@ -179,7 +191,9 @@ lazy val vscode = project
     scalacOptions += "-P:scalajs:sjsDefinedByDefault",
     scalaJSModuleKind := ModuleKind.CommonJSModule,
     artifactPath in (Compile, fastOptJS) := baseDirectory.value / "out" / "extension.js",
-    open := openVSCodeTask.dependsOn(fastOptJS in Compile).value
+    artifactPath in (Compile, fullOptJS) := baseDirectory.value / "out" / "extension.js",
+    open := openVSCodeTask.dependsOn(fastOptJS in Compile).value,
+    publishMarketplace := publishMarketplaceTask.dependsOn(fullOptJS in Compile).value
   )
   .dependsOn(libJS)
   .enablePlugins(ScalaJSPlugin)

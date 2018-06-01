@@ -1,4 +1,5 @@
 # How to publish
 
 ./vsce login scala-center
-./vsce publish VERSION
+cd ..
+sbt vscode/publishMarketplace
