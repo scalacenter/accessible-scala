@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+HERE="`dirname $0`"
+VSCE="$HERE/.vsce/node_modules/vsce/out/vsce"
+
+if [ ! -f $VSCE ]; then
+  pushd .vsce
+  yarn --ignore-engines
+  popd
+fi
+
+$VSCE
