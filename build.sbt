@@ -155,7 +155,7 @@ lazy val web = project
     webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly(),
     webpackBundlingMode in fullOptJS := BundlingMode.Application,
   )
-  .dependsOn(libJS, mespeak)
+  .dependsOn(libJS)
   .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin)
 
 lazy val open = taskKey[Unit]("open vscode")
@@ -183,14 +183,3 @@ lazy val vscode = project
   )
   .dependsOn(libJS)
   .enablePlugins(ScalaJSPlugin)
-
-lazy val mespeak = project
-  .in(file("mespeak"))
-  .settings(scalajsSettings)
-  .settings(
-    npmDependencies in Compile ++= Seq(
-      "mespeak" -> "2.0.2"
-    ),
-    scalacOptions += "-P:scalajs:sjsDefinedByDefault",
-  )
-  .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin)

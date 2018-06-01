@@ -10,10 +10,10 @@ object process extends js.Object {
 object TextToSpeech {
   def apply(): TextToSpeech = {
     process.platform match {
-      case "win32" => new SayJs()
+      case "win32"  => new SayJs()
       case "darwin" => new SayJs()
-      case "linux" => new Espeak()
-      case e => throw new Exception(s"unsupported platform: $e")
+      case "linux"  => new Espeak()
+      case e        => throw new Exception(s"unsupported platform: $e")
     }
   }
 }

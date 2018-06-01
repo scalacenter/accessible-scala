@@ -15,8 +15,9 @@ object DescribeTests extends FunSuite with DiffAssertions {
 
   check("def sum(args: Int*): Int", "def sum args repeated: Int.\nreturns: Int")
 
-  check("def unapply[H, T <: HList](l: HCons[H, T]) = foo",
-        "def unapply parametrized with: H, T sub-type of: HList l HCons of H, T.\nbody: foo")
+  check(
+    "def unapply[H, T <: HList](l: HCons[H, T]) = foo",
+    "def unapply parametrized with: H, T sub-type of: HList l HCons applied to H, T.\nbody: foo")
 
   def check(source: String, expected: String): Unit =
     check(source, expected, Parse.parseStat)
