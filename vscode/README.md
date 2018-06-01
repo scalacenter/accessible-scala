@@ -4,4 +4,6 @@ Scala is proudly a welcoming environment for all. One way to maintain and demons
 
 [SCP-016: Accessible Scala](https://github.com/scalacenter/advisoryboard/blob/master/proposals/016-verbal-descriptions.md)
 
-You can navigate the ast with the alt and down, right, left or up. 
+You can navigate the ast with the alt and down, right, left or up.
+
+On linux, you need to have the espeak command installed.
