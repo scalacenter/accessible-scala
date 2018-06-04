@@ -33,7 +33,8 @@ lazy val lib = crossProject(JSPlatform, JVMPlatform)
   .in(file("lib"))
   .settings(
     libraryDependencies ++= List(
-      "com.lihaoyi" %% "pprint" % "0.5.2",
+      "org.typelevel" %%% "paiges-cats" % "0.2.1",
+      "com.lihaoyi" %%% "pprint" % "0.5.2",
       "com.lihaoyi" %%% "fansi" % "0.2.5" % Test,
       "org.scalameta" %%% "scalameta" % metaV,
       "org.scalameta" %%% "contrib" % metaV

@@ -1,15 +1,12 @@
 package ch.epfl.scala.accessible
 
 object CursorPlayground extends CursorTestsUtils {
-  test("playground") {
+  test("navigate apply/select chains left to right") {
     doFocus(
-      "class A { →a.b.c← }",
-      ("class A { →a←.b.c }", down)
-    )
-
-    doFocus(
-      "class A { →a.b.c← }",
-      ("class A { →a←.b.c }", down)
+      "class A { foo.bar(arg).→buzz← }",
+      ("class A { foo.bar(→arg←).buzz }", left)
+      // ("class A { foo.→bar←(arg).buzz }", left),
+      // ("class A { →foo←.bar(arg).buzz }", left),
     )
   }
 }
