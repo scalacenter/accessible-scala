@@ -53,8 +53,7 @@ trait CursorTestsUtils extends FunSuite {
 
     if (obtained != expected) {
       println("   " + fObtained)
-      println("--- failed ---")
-      // throw new Exception("assertion failed")
+      throw new Exception("assertion failed")
     }
   }
 
