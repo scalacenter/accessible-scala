@@ -42,34 +42,65 @@ package object accessible {
     found
   }
 
-  type Tree2 = Tree with scala.Product
-  def pretty(tree: Tree2, showFields: Boolean = false): String = {
-    def prettyFromProduct(tree: Tree2): Doc = {
-      val args = 
-        tree.productFields.zip(tree.productIterator.toList).map{ case (k, v) =>
-          val rhs = 
-            v match {
-              case t: Tree2 => pretty0(t)
-              case _ => Doc.text(v.toString)
-            }
+  def pretty(tree: Tree, showFields: Boolean = false): String = {
+    def wrapList(args: List[Doc]): Doc = {
+      wrap(Doc.text("List") + Doc.char('('), args, Doc.char(')'))
+    }
 
-          if (showFields) Doc.text(k) + Doc.text(" = ") + rhs
-          else rhs
-        }
-
-      val prefix = Doc.text(tree.productPrefix) + Doc.char('(')
+    def wrap(prefix: Doc, args: List[Doc], suffix: Doc): Doc = {
       val body = Doc.intercalate(Doc.char(',') + Doc.line, args)
-      val suffix = Doc.char(')')
       body.tightBracketBy(prefix, suffix)
     }
 
-    def pretty0(tree: Tree2, showField: Boolean = false): Doc = {
-      tree match {
-        case _: Term.Name => Doc.text(tree.structure)
-        case _ => prettyFromProduct(tree)
+    def prettyList(vs: List[Tree]): Doc = 
+      wrapList(vs.map(v => prettyFromProduct(v)))
+
+    def prettyFromProduct(tree0: Tree): Doc = {
+      tree0 match {
+        case _ if tree0.tokens.isEmpty => Doc.empty
+        case v: Term.Name => Doc.text(v.structure)
+        case t: Type.Name => Doc.text(t.structure)
+        case _ => {
+          val args = 
+            tree0.productFields.zip(tree0.productIterator.toList).map{ case (k, v) =>
+              val rhs = 
+                v match {
+                  case v: Term.Name => Doc.text(v.structure)
+                  case t: Tree => prettyFromProduct(t)
+                  case o: Option[_] =>
+                    o match {
+                      case Some(t: Tree) => 
+                        wrap(
+                          Doc.text("Some") + Doc.char('('),
+                          List(prettyFromProduct(t)),
+                          Doc.char(')')
+                        )
+                      case None => Doc.text("None")
+                      case _ => throw new Exception("cannot handle: " + o)
+                    }
+                  case vs: List[_] =>
+                    vs match {
+                      case Nil => Doc.text("Nil")
+                      case (h : Tree) :: _ => {
+                        prettyList(vs.asInstanceOf[List[Tree]])
+                      }
+                      case (h : List[_]) :: _ => {
+                        val vsT = vs.asInstanceOf[List[List[Tree]]]
+                        wrapList(vsT.map(prettyList))
+                      }
+                    case _ => throw new Exception("cannot handle: " + vs)
+                    }
+                  case _ => Doc.text(v.toString)
+                }
+
+              if (showFields) Doc.text(k) + Doc.text(" = ") + rhs
+              else rhs
+            }
+
+          wrap(Doc.text(tree0.productPrefix) + Doc.char('('), args, Doc.char(')'))
+        }
       }
     }
-
-    pretty0(tree).render(1)
+    prettyFromProduct(tree).render(1)
   }
 }

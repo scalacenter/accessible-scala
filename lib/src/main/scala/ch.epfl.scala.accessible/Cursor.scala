@@ -76,11 +76,7 @@ object Cursor {
   def getChildren(tree: Tree, isDown: Boolean, isLeft: Boolean): Vector[Tree] = {
     tree match {
       case SelectChain(qual) if isDown => getChildrenSelectChain(qual)
-      case SelectChainReverse(qual) if isLeft => {
-        println("reverse")
-        println(qual)
-        getChildrenSelectChainReverse(qual)
-      }
+      case SelectChainReverse(qual) if isLeft => getChildrenSelectChainReverse(qual)
       case _ => tree.children.filter(_.tokens.nonEmpty).toVector
     }
 
@@ -190,7 +186,11 @@ case class Child private (val tree: Tree, parent: Cursor) extends Cursor {
     else {
       if (tree.tokens.size == parent.tree.tokens.size) parent.left
       else {
-        if (children.size == 1) Cursor(parent, children.head)
+        if (children.size == 1) {
+          println(pretty(parent.tree))
+          println(pretty(children.head))
+          Cursor(parent, children.head)
+        }
         else this
       }
     }
@@ -201,14 +201,3 @@ case class Child private (val tree: Tree, parent: Cursor) extends Cursor {
     else parent
   }
 }
-
-// Term.Select(
-//   Term.Apply(
-//     Term.Select(
-//       Term.Name("foo"),
-//       Term.Name("bar")
-//     ),
-//     List(arg)
-//   ),
-//   Term.Name("buzz")
-// )

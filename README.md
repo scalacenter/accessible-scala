@@ -36,3 +36,7 @@ Cursor:
 Integrations:
 
 * emacspeak
+
+Testing:
+
+* webpage with expressions coverage
