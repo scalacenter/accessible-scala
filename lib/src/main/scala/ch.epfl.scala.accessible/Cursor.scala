@@ -16,8 +16,9 @@ object Cursor {
     buildCursor(Root(tree), tree => tree.pos.start <= range.start && range.end <= tree.pos.end)
   }
 
-  def apply(from: Cursor, to: Tree): Cursor =
-    buildCursor(from, tree => to.pos.start <= tree.pos.start && tree.pos.end <= to.pos.end)
+  def apply(from: Cursor, to: Tree): Cursor = {
+    buildCursor(from, tree => tree.pos.start <= to.pos.start && to.pos.end <= tree.pos.end)
+  }
 
   private def buildCursor(root: Cursor, within: Tree => Boolean): Cursor = {
     var cursor: Cursor = root
@@ -40,44 +41,44 @@ object Cursor {
   object SelectChain {
     def unapply(tree: Tree): Option[Tree] = tree match {
       case Term.Select(Term.Select(qual, _), _) => Some(qual)
-      case Term.Select(Term.Apply(fun, _),_) => Some(fun)
-      case Term.Apply(Term.Select(qual, _),_) => Some(qual)
-      case _ => None
+      case Term.Select(Term.Apply(fun, _), _)   => Some(fun)
+      case Term.Apply(Term.Select(qual, _), _)  => Some(qual)
+      case _                                    => None
     }
   }
 
   object SelectChainReverse {
     def unapply(tree: Tree): Option[Tree] = tree match {
       case Term.Select(Term.Select(_, name), _) => Some(name)
-      case Term.Select(Term.Apply(fun, args),_) => 
+      case Term.Select(Term.Apply(fun, args), _) =>
         if (args.nonEmpty) Some(args.last)
         else Some(fun)
-      case Term.Apply(Term.Select(_, name),_) => Some(name)
-      case _ => None 
+      case Term.Apply(Term.Select(_, name), _) => Some(name)
+      case _                                   => None
     }
   }
 
   private def getChildrenSelectChain(tree: Tree): Vector[Tree] = {
     tree match {
-      case SelectChain(t) => getChildrenSelectChain(t)
+      case SelectChain(t)                  => getChildrenSelectChain(t)
       case Term.Select(qual: Term.Name, _) => Vector(qual)
-      case _ => Vector(tree)
+      case _                               => Vector(tree)
     }
   }
 
   private def getChildrenSelectChainReverse(tree: Tree): Vector[Tree] = {
     tree match {
       case SelectChainReverse(t) => getChildrenSelectChainReverse(t)
-      case Term.Select(_, name) => Vector(name)
-      case _ => Vector(tree)
+      case Term.Select(_, name)  => Vector(name)
+      case _                     => Vector(tree)
     }
   }
 
   def getChildren(tree: Tree, isDown: Boolean, isLeft: Boolean): Vector[Tree] = {
     tree match {
-      case SelectChain(qual) if isDown => getChildrenSelectChain(qual)
+      case SelectChain(qual) if isDown        => getChildrenSelectChain(qual)
       case SelectChainReverse(qual) if isLeft => getChildrenSelectChainReverse(qual)
-      case _ => tree.children.filter(_.tokens.nonEmpty).toVector
+      case _                                  => tree.children.filter(_.tokens.nonEmpty).toVector
     }
 
   }
@@ -168,12 +169,11 @@ case class Child private (val tree: Tree, parent: Cursor) extends Cursor {
         // val →x← = 1
         // Defn.Val(Nil, List(Pat.Var(→Term.Name("a")←)), None, Lit.Int(1))
         parent.right
-      }
-      else {
+      } else {
         parent match {
           // keep going if you are in select chain, ex: a.b.c
-          case Child(_, parent0) if (Cursor.isSelectChain(parent0.tree)) =>  parent.right
-          case _ => this
+          case Child(_, parent0) if (Cursor.isSelectChain(parent0.tree)) => parent.right
+          case _                                                         => this
         }
       }
     }
@@ -186,11 +186,9 @@ case class Child private (val tree: Tree, parent: Cursor) extends Cursor {
     else {
       if (tree.tokens.size == parent.tree.tokens.size) parent.left
       else {
-        if (children.size == 1) {
-          println(pretty(parent.tree))
-          println(pretty(children.head))
-          Cursor(parent, children.head)
-        }
+        // navigate left on a select chain.
+        // ex: foo.bar(arg).→buzz← to foo.bar(→arg←).buzz
+        if (children.size == 1) Cursor(parent, children.head)
         else this
       }
     }

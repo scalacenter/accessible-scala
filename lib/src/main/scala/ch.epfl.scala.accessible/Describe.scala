@@ -63,7 +63,7 @@ object Describe {
       case Type.Apply(tpt, args) =>
         val allPlaceholders = args.forall {
           case Type.Placeholder(Type.Bounds(None, None)) => true
-          case _ => false
+          case _                                         => false
         }
 
         if (allPlaceholders) s"${describe(tpt)} taking ${args.size} parameters"

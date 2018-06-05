@@ -1,7 +1,7 @@
 package ch.epfl.scala.accessible
 
 object CursorSuite extends CursorTestsUtils {
-  
+
   test("current") {
     doFocus(
       "class A; class B",
@@ -141,7 +141,7 @@ object CursorSuite extends CursorTestsUtils {
     doFocus(
       "class A { →a.b().c()← }",
       ("class A { →a←.b().c() }", down)
-    ) 
+    )
   }
 
   test("navigate apply/select chains left to right") {
@@ -151,6 +151,15 @@ object CursorSuite extends CursorTestsUtils {
       ("class A { foo.→bar←(arg).buzz }", right),
       ("class A { foo.bar(→arg←).buzz }", right),
       ("class A { foo.bar(arg).→buzz← }", right)
+    )
+  }
+
+  test("navigate apply/select chains right to left ") {
+    doFocus(
+      "class A { foo.bar(arg).→buzz← }",
+      ("class A { foo.bar(→arg←).buzz }", left),
+      ("class A { foo.→bar←(arg).buzz }", left),
+      ("class A { →foo←.bar(arg).buzz }", left)
     )
   }
 
