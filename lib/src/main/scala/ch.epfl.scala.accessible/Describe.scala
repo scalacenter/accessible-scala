@@ -62,13 +62,18 @@ object Describe {
       case New(init)                        => ???
       case NewAnonymous(templ)              => ???
       // Term.Param see describeMisc
-      case PartialFunction(cases)                 => ???
-      case Placeholder()                          => ???
-      case Repeated(expr)                         => ???
-      case Return(expr)                           => ???
-      case Select(qual, name)                     => ???
-      case Super(thisp, superp)                   => ???
-      case This(qual)                             => ???
+      case PartialFunction(cases) => ???
+      case Placeholder()          => ???
+      case Repeated(expr)         => ???
+      case Return(expr)           => ???
+      case Select(qual, name)     => ???
+      case Super(thisp, superp)   => ???
+      case This(qual) => {
+        qual match {
+          case scala.meta.Name.Anonymous() => "this"
+          case scala.meta.Name(value)      => s"this within $value"
+        }
+      }
       case Throw(expr)                            => ???
       case Try(expr, catchp, finallyp)            => ???
       case TryWithHandler(expr, catchp, finallyp) => ???
@@ -91,7 +96,7 @@ object Describe {
 
     tpe match {
       case And(lhs, rhs) => {
-        s"${describe(lhs)} and {describe(rhs)}"
+        s"${describe(lhs)} and ${describe(rhs)}"
       }
       case Annotate(tpe, annots) => {
         s"${describe(tpe)} annotated with: ${join(annots)}"
@@ -134,28 +139,22 @@ object Describe {
       case Lambda(tparams, tpe) => {
         s"lambda ${join(tparams)} to ${describe(tpe)}"
       }
-      case Method(paramss, tpe) => {
-        val paramssRes =
-          if (paramss.nonEmpty) paramss.flatMap(_.map(describe)).mkString(", ")
-          else ""
-        s"method $paramssRes to ${describe(tpe)}"
-      }
       case Name(value) => {
         value
       }
       case Or(lhs, rhs) => {
-        s"${describe(lhs)} or {describe(rhs)}"
+        s"${describe(lhs)} or ${describe(rhs)}"
       }
       // Type.Param see describeMisc
       case Placeholder(bounds) => {
         "placeholder " + describeMisc(bounds)
       }
       case Project(qual, name) => {
-        s"${describe(qual)} project ${describe(name)}"
+        s"project ${describe(qual)} ${describe(name)}"
       }
       case Refine(tpe, stats) => {
         mkString(
-          "type refinements: ",
+          "type refinements:",
           tpe.map(describe).getOrElse(""),
           join(stats)
         )
@@ -177,9 +176,7 @@ object Describe {
       case Tuple(args) => {
         s"tuple ${args.size} of ${join(args)}"
       }
-      case Var(name) => {
-        describeType(name)
-      }
+      // case Var(name) => describeType(name)
       case With(lhs, rhs) => {
         s"${describe(lhs)} with ${describe(rhs)}"
       }
@@ -250,12 +247,23 @@ object Describe {
   def describeMod(mod: Mod): String = {
     import Mod._
 
+    def scoped(modifier: String, within: Ref): String = {
+      val scope =
+        within match {
+          case Name.Anonymous() => ""
+          case Name(v)          => s"within $v"
+          case Term.This(_)     => "this"
+        }
+
+      mkString(modifier, scope)
+    }
+
     mod match {
-      case Annot(init)         => ??? //s"at ${describe(init)}"
+      case Annot(init)         => ???
       case Mod.Covariant()     => "co-variant"
       case Mod.Contravariant() => "contra-variant"
-      case Private(within)     => s"private within ${describe(within)}"
-      case Protected(within)   => s"protected within ${describe(within)}"
+      case Private(within)     => scoped("private", within)
+      case Protected(within)   => scoped("protected", within)
       case _                   => mod.syntax
     }
   }
@@ -366,8 +374,8 @@ object Describe {
       describeTree(name),
       tparamsRes,
       paramssRes,
-      decltpe.map(tpe => ".\nreturns: " + describe(tpe)).getOrElse(""),
-      body.map(b => ".\nbody: " + describe(b)).getOrElse("")
+      decltpe.map(tpe => "returns: " + describe(tpe)).getOrElse(""),
+      body.map(b => "body: " + describe(b)).getOrElse("")
     )
   }
 
