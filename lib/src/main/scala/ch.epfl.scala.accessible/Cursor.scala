@@ -36,56 +36,66 @@ object Cursor {
     cursor
   }
 
-  def isSelectChain(tree: Tree): Boolean = SelectChain.unapply(tree).nonEmpty
+  def isRecursive(tree: Tree): Boolean = Recursive.unapply(tree).nonEmpty
 
-  object SelectChain {
+  object Recursive {
     def unapply(tree: Tree): Option[Tree] = tree match {
-      case Term.Select(Term.Select(qual, _), _) => Some(qual)
-      case Term.Select(Term.Apply(fun, _), _)   => Some(fun)
-      case Term.Apply(Term.Select(qual, _), _)  => Some(qual)
-      case _                                    => None
+      case Term.Select(Term.Select(qual, _), _)                    => Some(qual)
+      case Term.Select(Term.Apply(fun, _), _)                      => Some(fun)
+      case Term.Apply(Term.Select(qual, _), _)                     => Some(qual)
+      case Term.ApplyInfix(Term.ApplyInfix(lhs, _, _, _), _, _, _) => Some(lhs)
+      case _                                                       => None
     }
   }
 
-  object SelectChainReverse {
-    def unapply(tree: Tree): Option[Tree] = tree match {
-      case Term.Select(Term.Select(_, name), _) => Some(name)
-      case Term.Select(Term.Apply(fun, args), _) =>
-        if (args.nonEmpty) Some(args.last)
-        else Some(fun)
-      case Term.Apply(Term.Select(_, name), _) => Some(name)
-      case _                                   => None
-    }
-  }
-
-  private def getChildrenSelectChain(tree: Tree): Vector[Tree] = {
+  private def getChildrenRecursive(tree: Tree): Vector[Tree] = {
     tree match {
-      case SelectChain(t)                  => getChildrenSelectChain(t)
+      case Recursive(t)                    => getChildrenRecursive(t)
       case Term.Select(qual: Term.Name, _) => Vector(qual)
       case _                               => Vector(tree)
     }
   }
 
-  private def getChildrenSelectChainReverse(tree: Tree): Vector[Tree] = {
+  object RecursiveReverse {
+    def unapply(tree: Tree): Option[Tree] = tree match {
+      case Term.Select(Term.Select(_, name), _) => Some(name)
+      case Term.Select(Term.Apply(fun, args), _) =>
+        if (args.nonEmpty) Some(args.last)
+        else Some(fun)
+      case Term.Apply(Term.Select(_, name), args) =>
+        if (args.nonEmpty) Some(args.last)
+        else Some(name)
+      case Term.ApplyInfix(Term.ApplyInfix(_, _, _, args), _, _, _) => Some(args.last)
+      case Term.Select(_, sel)                                      => Some(sel)
+      case Term.ApplyInfix(_, _, _, args)                           => Some(args.last)
+      case _                                                        => None
+    }
+  }
+
+  private def getChildrenRecursiveReverse(tree: Tree): Vector[Tree] = {
     tree match {
-      case SelectChainReverse(t) => getChildrenSelectChainReverse(t)
-      case Term.Select(_, name)  => Vector(name)
-      case _                     => Vector(tree)
+      case RecursiveReverse(t)             => getChildrenRecursiveReverse(t)
+      case Term.Select(qual: Term.Name, _) => Vector(qual)
+      case _                               => Vector(tree)
     }
   }
 
   def getChildren(tree: Tree, isDown: Boolean, isLeft: Boolean): Vector[Tree] = {
     tree match {
-      case SelectChain(qual) if isDown        => getChildrenSelectChain(qual)
-      case SelectChainReverse(qual) if isLeft => getChildrenSelectChainReverse(qual)
-      case _                                  => tree.children.filter(_.tokens.nonEmpty).toVector
+      case Recursive(t) if isDown => getChildrenRecursive(t)
+      case _ if isLeft => {
+        val children = tree.children.toList
+        (children match {
+          case RecursiveReverse(h) :: t => h :: t
+          case _                        => children
+        }).toVector
+      }
+      case _ => tree.children.filter(_.tokens.nonEmpty).toVector
     }
-
   }
 
-  def getChildren(tree: Tree, parent: Tree, isDown: Boolean): Vector[Tree] = {
-    def default = getChildren(tree, isDown, isLeft = false)
-
+  def getChildren(tree: Tree, parent: Tree): Vector[Tree] = {
+    def default = getChildren(tree, isDown = true, isLeft = false)
     (tree, parent) match {
       case (_, t: Defn.Def)              => Vector(t.body)
       case (_, t: Defn.Macro)            => Vector(t.body)
@@ -114,15 +124,9 @@ sealed trait Cursor {
     val indent = "  "
     val nl = '\n'
 
-    def shortName(tree: Tree): String = {
-      val full = tree.getClass.toString
-      val lastDollard = full.lastIndexOf("$")
-      full.slice(lastDollard + 1, full.size - "Impl".size)
-    }
-
     def loop(cursor: Cursor): (Int, String) = {
       cursor match {
-        case Root(tree) => (0, shortName(tree))
+        case Root(tree) => (0, tree.productPrefix)
         case Child(tree, parent) => {
           val (level, res) = loop(parent)
           val currentLevel = level + 1
@@ -130,7 +134,7 @@ sealed trait Cursor {
           (
             currentLevel,
             res + nl +
-              levelIndent + shortName(tree) // + " " +((tree.pos.start, tree.pos.end))
+              levelIndent + tree.productPrefix + " " + ((tree.pos.start, tree.pos.end))
           )
         }
       }
@@ -153,7 +157,7 @@ case class Root private (val tree: Tree) extends Cursor {
 case class Child private (val tree: Tree, parent: Cursor) extends Cursor {
 
   def down: Cursor = {
-    val children = Cursor.getChildren(tree, parent.tree, isDown = true)
+    val children = Cursor.getChildren(tree, parent.tree)
     if (children.nonEmpty) Child(children.head, this)
     else this
   }
@@ -171,9 +175,9 @@ case class Child private (val tree: Tree, parent: Cursor) extends Cursor {
         parent.right
       } else {
         parent match {
-          // keep going if you are in select chain, ex: a.b.c
-          case Child(_, parent0) if (Cursor.isSelectChain(parent0.tree)) => parent.right
-          case _                                                         => this
+          // keep going if you are in a recursive tree, ex: a.b.c
+          case Child(_, parent0) if (Cursor.isRecursive(parent0.tree)) => parent.right
+          case _                                                       => this
         }
       }
     }
@@ -185,12 +189,7 @@ case class Child private (val tree: Tree, parent: Cursor) extends Cursor {
     if (idx > 0) Child(children(idx - 1), parent)
     else {
       if (tree.tokens.size == parent.tree.tokens.size) parent.left
-      else {
-        // navigate left on a select chain.
-        // ex: foo.bar(arg).→buzz← to foo.bar(→arg←).buzz
-        if (children.size == 1) Cursor(parent, children.head)
-        else this
-      }
+      else this
     }
   }
 

@@ -163,6 +163,28 @@ object CursorSuite extends CursorTestsUtils {
     )
   }
 
+  test("navigate infix operations left to right") {
+    doFocus(
+      "class A { →foo + bar(arg) + buzz← }",
+      ("class A { →foo← + bar(arg) + buzz }", down),
+      ("class A { foo →+← bar(arg) + buzz }", right),
+      ("class A { foo + →bar(arg)← + buzz }", right),
+      ("class A { foo + bar(arg) →+← buzz }", right),
+      ("class A { foo + bar(arg) + →buzz← }", right)
+    )
+  }
+
+  test("navigate infix operations right to left ") {
+    doFocus(
+      "class A { a op b op (c, →d←) }",
+      ("class A { a op b op (→c←, d) }", left),
+      ("class A { a op b →op← (c, d) }", left),
+      ("class A { a op →b← op (c, d) }", left),
+      ("class A { a →op← b op (c, d) }", left),
+      ("class A { →a← op b op (c, d) }", left)
+    )
+  }
+
   test("large example") {
     import java.nio.file.{Paths, Files}
     import scala.meta._
