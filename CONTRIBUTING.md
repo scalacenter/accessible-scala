@@ -32,4 +32,3 @@ pushd sublime-text
 ./install.sh
 popd
 ```
-

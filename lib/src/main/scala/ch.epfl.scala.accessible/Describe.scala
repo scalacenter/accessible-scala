@@ -57,11 +57,13 @@ object Describe {
           default.map(describe).getOrElse("")
         ).filter(_.nonEmpty).mkString(" ")
 
-      // TODO: class Type.Annotate(tpe: Type, annots: List[Mod.Annot])
+      case Type.Annotate(tpe, annots) =>
+        s"${describe(tpe)} annotated with: ${join(annots)}"
 
       case Type.Apply(tpt, args) =>
         val allPlaceholders = args.forall {
-          case Type.Placeholder(Type.Bounds(None, None)) => true; case _ => false
+          case Type.Placeholder(Type.Bounds(None, None)) => true
+          case _                                         => false
         }
 
         if (allPlaceholders) s"${describe(tpt)} taking ${args.size} parameters"

@@ -1,6 +1,7 @@
 package ch.epfl.scala.accessible
 
 object CursorSuite extends CursorTestsUtils {
+
   test("current") {
     doFocus(
       "class A; class B",
@@ -116,6 +117,71 @@ object CursorSuite extends CursorTestsUtils {
     doFocus(
       "class A { private →←val a = 1; private val b = 2}",
       ("class A { private val a = 1; →private val b = 2←}", right)
+    )
+  }
+
+  test("dive down apply/select chains") {
+    doFocus(
+      "class A { →a.b← }",
+      ("class A { →a←.b }", down)
+    )
+    doFocus(
+      "class A { →a.b.c← }",
+      ("class A { →a←.b.c }", down),
+      ("class A { a.→b←.c }", right)
+    )
+    doFocus(
+      "class A { →a.b.c.d.e← }",
+      ("class A { →a←.b.c.d.e }", down)
+    )
+    doFocus(
+      "class A { →a.b.c← }",
+      ("class A { →a←.b.c }", down)
+    )
+    doFocus(
+      "class A { →a.b().c()← }",
+      ("class A { →a←.b().c() }", down)
+    )
+  }
+
+  test("navigate apply/select chains left to right") {
+    doFocus(
+      "class A { →foo.bar(arg).buzz← }",
+      ("class A { →foo←.bar(arg).buzz }", down),
+      ("class A { foo.→bar←(arg).buzz }", right),
+      ("class A { foo.bar(→arg←).buzz }", right),
+      ("class A { foo.bar(arg).→buzz← }", right)
+    )
+  }
+
+  test("navigate apply/select chains right to left ") {
+    doFocus(
+      "class A { foo.bar(arg).→buzz← }",
+      ("class A { foo.bar(→arg←).buzz }", left),
+      ("class A { foo.→bar←(arg).buzz }", left),
+      ("class A { →foo←.bar(arg).buzz }", left)
+    )
+  }
+
+  test("navigate infix operations left to right") {
+    doFocus(
+      "class A { →foo + bar(arg) + buzz← }",
+      ("class A { →foo← + bar(arg) + buzz }", down),
+      ("class A { foo →+← bar(arg) + buzz }", right),
+      ("class A { foo + →bar(arg)← + buzz }", right),
+      ("class A { foo + bar(arg) →+← buzz }", right),
+      ("class A { foo + bar(arg) + →buzz← }", right)
+    )
+  }
+
+  test("navigate infix operations right to left ") {
+    doFocus(
+      "class A { a op b op (c, →d←) }",
+      ("class A { a op b op (→c←, d) }", left),
+      ("class A { a op b →op← (c, d) }", left),
+      ("class A { a op →b← op (c, d) }", left),
+      ("class A { a →op← b op (c, d) }", left),
+      ("class A { →a← op b op (c, d) }", left)
     )
   }
 

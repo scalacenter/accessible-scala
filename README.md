@@ -1,4 +1,4 @@
-[![Travis Build Status](https://travis-ci.org/MasseGuillaume/accessible-scala.svg?branch=master)](https://travis-ci.org/scalacenter/accessible-scala)[![codecov](https://codecov.io/gh/MasseGuillaume/accessible-scala/branch/master/graph/badge.svg)](https://codecov.io/gh/MasseGuillaume/accessible-scala)[![Join the chat at https://gitter.im/scalacenter/accessible-scala](https://badges.gitter.im/scalacenter/accessible-scala.svg)](https://gitter.im/scalacenter/accessible-scala)
+[![Travis Build Status](https://travis-ci.org/MasseGuillaume/accessible-scala.svg?branch=master)](https://travis-ci.org/scalacenter/accessible-scala) [![codecov](https://codecov.io/gh/MasseGuillaume/accessible-scala/branch/master/graph/badge.svg)](https://codecov.io/gh/MasseGuillaume/accessible-scala) [![Join the chat at https://gitter.im/scalacenter/accessible-scala](https://badges.gitter.im/scalacenter/accessible-scala.svg)](https://gitter.im/scalacenter/accessible-scala)
 ========
 
 # Accessible Scala
@@ -36,3 +36,7 @@ Cursor:
 Integrations:
 
 * emacspeak
+
+Testing:
+
+* webpage with expressions coverage
