@@ -42,7 +42,7 @@ object Describe {
 
     lit match {
       case Unit() => "unit"
-      case _ => lit.syntax
+      case _      => lit.syntax
     }
   }
 
@@ -55,11 +55,11 @@ object Describe {
         s"${describe(fun)} applied to ${join(args)}"
       }
       case ApplyInfix(lhs, op, targs, args) => {
-        val targsPart = 
+        val targsPart =
           if (targs.nonEmpty) "parametrized with " + join(targs) + " applied to"
           else ""
 
-        val argsPart = 
+        val argsPart =
           if (args.nonEmpty) join(args)
           else "empty arguments"
 
@@ -67,11 +67,11 @@ object Describe {
           describe(lhs),
           describe(op),
           targsPart,
-          argsPart  
+          argsPart
         )
       }
-      case ApplyType(fun, targs)            => {
-        val subject = 
+      case ApplyType(fun, targs) => {
+        val subject =
           if (targs.size > 1) "types"
           else "type"
 
@@ -83,34 +83,34 @@ object Describe {
         )
       }
 
-      case ApplyUnary(op, arg)              => {
-        describe(op) + " " +describe(arg)
+      case ApplyUnary(op, arg) => {
+        describe(op) + " " + describe(arg)
       }
 
-      case Ascribe(expr, tpe)               => {
+      case Ascribe(expr, tpe) => {
         s"${describe(expr)} typed as ${describe(tpe)}"
       }
 
-      case Assign(lhs, rhs)                 => {
+      case Assign(lhs, rhs) => {
         s"${describe(lhs)} assigned to ${describe(rhs)}"
       }
-      case Block(stats)                     => ???
-      case Do(body, expr)                   => {
+      case Block(stats) => ???
+      case Do(body, expr) => {
         s"do ${describe(body)} while ${describe(expr)}"
       }
-      case Eta(expr)                        => {
+      case Eta(expr) => {
         s"η-conversion of ${describe(expr)}"
       }
-      case For(enums, body)                 => ???
-      case ForYield(enums, body)            => ???
-      case Function(params, body)           => {
+      case For(enums, body)      => ???
+      case ForYield(enums, body) => ???
+      case Function(params, body) => {
         val dParams =
-        if (params.nonEmpty) join(params)
-        else "unit"
+          if (params.nonEmpty) join(params)
+          else "unit"
 
-      "function " + dParams + " to " + describe(body)
+        "function " + dParams + " to " + describe(body)
       }
-      case If(cond, thenp, elsep)           => {
+      case If(cond, thenp, elsep) => {
         val elseRes =
           if (elsep.is[Lit.Unit] && elsep.tokens.isEmpty) ""
           else s"else ${describe(elsep)}"
@@ -120,11 +120,18 @@ object Describe {
           elseRes
         )
       }
-      case Interpolate(prefix, parts, args) => ???
-      case Match(expr, cases)               => ???
-      case Name(value)                      => value
-      case New(init)                        => ???
-      case NewAnonymous(templ)              => ???
+      case Interpolate(prefix, parts, args) =>
+        interpolation(describe(prefix), "insert", parts, args)
+      case Match(expr, cases) => {
+        mkString(
+          describe(expr),
+          "match",
+          join(cases)
+        )
+      }
+      case Name(value)         => value
+      case New(init)           => s"new ${describe(init)}"
+      case NewAnonymous(templ) => ???
       // Term.Param see describeMisc
       case PartialFunction(cases) => {
         s"partial function ${join(cases)}"
@@ -250,39 +257,21 @@ object Describe {
   def describePat(pat: Pat): String = {
     import Pat._
 
-    def interpolation(prefix: String, parts: List[Tree], args: List[Tree]): String = {
-      val body =
-        args.zip(parts.tail).foldLeft(describe(parts.head)) {
-          case (acc, (l, r)) =>
-            val dr = describe(r)
-
-            val sep0 =
-              if (acc.endsWith(" ")) ""
-              else " "
-
-            val sep =
-              if (dr.startsWith(" ")) ","
-              else if (dr.isEmpty) ""
-              else ", "
-
-            acc + sep0 + "extracts " + describe(l) + sep + dr
-        }
-
-      s"$prefix interpolation $body"
-    }
+    def patInterpolation(prefix: String, parts: List[Tree], args: List[Tree]): String =
+      interpolation(prefix, "extracts", parts, args)
 
     pat match {
       case Alternative(lhs, rhs)            => s"${describe(lhs)} or ${describe(rhs)}"
       case Bind(lhs, rhs)                   => s"${describe(lhs)} bound to ${describe(rhs)}"
       case Extract(fun, args)               => s"${describe(fun)} extracts ${join(args)}"
       case ExtractInfix(lhs, op, rhs)       => s"${describe(lhs)} ${describe(op)} ${join(rhs)}"
-      case Interpolate(prefix, parts, args) => interpolation(describe(prefix), parts, args)
+      case Interpolate(prefix, parts, args) => patInterpolation(describe(prefix), parts, args)
       case SeqWildcard()                    => "multiple placeholders"
       case Tuple(args)                      => tuples(args)
       case Typed(lhs, rhs)                  => s"${describe(lhs)} typed as ${describe(rhs)}"
       case Var(name)                        => describe(name)
       case Wildcard()                       => "placeholder"
-      case Xml(parts, args)                 => interpolation("xml", parts, args)
+      case Xml(parts, args)                 => patInterpolation("xml", parts, args)
       case Term.Name(name)                  => s"exactly $name"
     }
   }
@@ -394,11 +383,11 @@ object Describe {
         describe(body)
       )
     }
-    case Init(tpe, name, argss)        => ???
-    case Pkg(ref, stats)               => ???
-    case Pkg.Object(mods, name, templ) => ???
-    case Self(name, decltpe)           => ???
-    case Source(stats)                 => ???
+    case Init(tpe, Name.Anonymous(), argss) => ???
+    case Pkg(ref, stats)                    => ???
+    case Pkg.Object(mods, name, templ)      => ???
+    case Self(name, decltpe)                => ???
+    case Source(stats)                      => ???
     case Template(early, inits, self, stats) => {
       // todo
       ""
@@ -445,6 +434,27 @@ object Describe {
       )
     }
 
+  }
+
+  def interpolation(prefix: String, verb: String, parts: List[Tree], args: List[Tree]): String = {
+    val body =
+      args.zip(parts.tail).foldLeft(describe(parts.head)) {
+        case (acc, (l, r)) =>
+          val dr = describe(r)
+
+          val sep0 =
+            if (acc.endsWith(" ")) ""
+            else " "
+
+          val sep =
+            if (dr.startsWith(" ")) ","
+            else if (dr.isEmpty) ""
+            else ", "
+
+          acc + sep0 + verb + " " + describe(l) + sep + dr
+      }
+
+    s"$prefix interpolation $body"
   }
 
   private def dDef(mods: List[Mod],
