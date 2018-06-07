@@ -37,7 +37,14 @@ object Describe {
     case _                                     => describeMisc(tree)
   }
 
-  def describeLit(lit: Lit): String = lit.syntax
+  def describeLit(lit: Lit): String = {
+    import Lit._
+
+    lit match {
+      case Unit() => "unit"
+      case _ => lit.syntax
+    }
+  }
 
   def describeTerm(term: Term): String = {
     import Term._
@@ -47,17 +54,72 @@ object Describe {
       case Apply(fun, args) => {
         s"${describe(fun)} applied to ${join(args)}"
       }
-      case ApplyInfix(lhs, op, targs, args) => ???
-      case ApplyType(fun, targs)            => ???
-      case Ascribe(expr, tpe)               => ???
-      case Assign(lhs, rhs)                 => ???
+      case ApplyInfix(lhs, op, targs, args) => {
+        val targsPart = 
+          if (targs.nonEmpty) "parametrized with " + join(targs) + " applied to"
+          else ""
+
+        val argsPart = 
+          if (args.nonEmpty) join(args)
+          else "empty arguments"
+
+        mkString(
+          describe(lhs),
+          describe(op),
+          targsPart,
+          argsPart  
+        )
+      }
+      case ApplyType(fun, targs)            => {
+        val subject = 
+          if (targs.size > 1) "types"
+          else "type"
+
+        mkString(
+          describe(fun),
+          "applied to",
+          subject,
+          join(targs)
+        )
+      }
+
+      case ApplyUnary(op, arg)              => {
+        describe(op) + " " +describe(arg)
+      }
+
+      case Ascribe(expr, tpe)               => {
+        s"${describe(expr)} typed as ${describe(tpe)}"
+      }
+
+      case Assign(lhs, rhs)                 => {
+        s"${describe(lhs)} assigned to ${describe(rhs)}"
+      }
       case Block(stats)                     => ???
-      case Do(body, expr)                   => ???
-      case Eta(expr)                        => ???
+      case Do(body, expr)                   => {
+        s"do ${describe(body)} while ${describe(expr)}"
+      }
+      case Eta(expr)                        => {
+        s"η-conversion of ${describe(expr)}"
+      }
       case For(enums, body)                 => ???
       case ForYield(enums, body)            => ???
-      case Function(params, body)           => ???
-      case If(cond, thenp, elsep)           => ???
+      case Function(params, body)           => {
+        val dParams =
+        if (params.nonEmpty) join(params)
+        else "unit"
+
+      "function " + dParams + " to " + describe(body)
+      }
+      case If(cond, thenp, elsep)           => {
+        val elseRes =
+          if (elsep.is[Lit.Unit] && elsep.tokens.isEmpty) ""
+          else s"else ${describe(elsep)}"
+
+        mkString(
+          s"if ${describe(cond)} then ${describe(thenp)}",
+          elseRes
+        )
+      }
       case Interpolate(prefix, parts, args) => ???
       case Match(expr, cases)               => ???
       case Name(value)                      => value
@@ -217,7 +279,7 @@ object Describe {
       case Interpolate(prefix, parts, args) => interpolation(describe(prefix), parts, args)
       case SeqWildcard()                    => "multiple placeholders"
       case Tuple(args)                      => tuples(args)
-      case Typed(lhs, rhs)                  => s"${describe(lhs)} typed ${describe(rhs)}"
+      case Typed(lhs, rhs)                  => s"${describe(lhs)} typed as ${describe(rhs)}"
       case Var(name)                        => describe(name)
       case Wildcard()                       => "placeholder"
       case Xml(parts, args)                 => interpolation("xml", parts, args)

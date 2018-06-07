@@ -7,9 +7,36 @@ import scala.meta._
 object DescribeTests extends DescribeTestsUtils {
   
   // Lit
-  // check[Lit]("1")
+  {
+    import Lit._
+    check[Int]("1", "1")
+    check[Unit]("()", "unit")
+  }
 
-  // Term
+  // Term  
+  {
+    import scala.meta.Term._
+
+    check[Apply]           ("f(a)"                , "f applied to a")
+    check[Apply]           ("f({ case a => a })"  , "f applied to partial function case a then a")
+    check[ApplyInfix]      ("a op b"              , "a op b")
+    check[ApplyInfix]      ("a op[S, T] b"        , "a op parametrized with S, T applied to b")
+    check[ApplyInfix]      ("(a, b) op (c, d)"    , "tuple 2 of a, b op c, d")
+    check[ApplyInfix]      ("a f ()"              , "a f empty arguments")
+    check[ApplyType]       ("f[S,T]"              , "f applied to types S, T")
+    check[ApplyType]       ("f[T]"                , "f applied to type T")
+    check[ApplyUnary]      ("-a"                  , "- a")
+    check[Ascribe]         ("a: T"                , "a typed as T")
+    check[Assign]          ("a = b"               , "a assigned to b")
+    check[Do]              ("do d while (p)"      , "do d while p")
+    check[Eta]             ("f _"                 , "η-conversion of f")
+    check[Function]        ("(a, b) => c"         , "function a, b to c")
+    check[Function]        ("() => a"             , "function unit to a")
+    check[If]              ("if (p) t else f"     , "if p then t else f")
+    check[If]              ("if (p) t"            , "if p then t")
+    check[If]              ("if (p) t else ()"    , "if p then t else unit")
+    check[If]              ("if (p) if (p2) t"    , "if p then if p2 then t")
+  }
 
   // Type
   {
@@ -62,7 +89,7 @@ object DescribeTests extends DescribeTestsUtils {
     checkPat[ExtractInfix] ("a :: b"                 , "a :: b")
     checkPat[Interpolate]  (""" s"foo $a bar $b" """ , "s interpolation foo extracts a, bar extracts b")
     checkPat[Xml]          ("<h1>a{b}c{d}e{f}g</h1>" , "xml interpolation <h1>a extracts b, c extracts d, e extracts f, g</h1>")
-    checkPat[Typed]        ("x: T"                   , "x typed T")
+    checkPat[Typed]        ("x: T"                   , "x typed as T")
     checkCase[Lit]         ("→case `foobar` => rhs←" , "case exactly foobar then rhs")
   }
 
