@@ -43,8 +43,10 @@ object Describe {
     import Term._
 
     term match {
-      case Annotate(expr, annots)           => ???
-      case Apply(fun, args)                 => ???
+      case Annotate(expr, annots) => ???
+      case Apply(fun, args) => {
+        s"${describe(fun)} applied to ${join(args)}"
+      }
       case ApplyInfix(lhs, op, targs, args) => ???
       case ApplyType(fun, targs)            => ???
       case Ascribe(expr, tpe)               => ???
@@ -62,12 +64,14 @@ object Describe {
       case New(init)                        => ???
       case NewAnonymous(templ)              => ???
       // Term.Param see describeMisc
-      case PartialFunction(cases) => ???
-      case Placeholder()          => ???
-      case Repeated(expr)         => ???
-      case Return(expr)           => ???
-      case Select(qual, name)     => ???
-      case Super(thisp, superp)   => ???
+      case PartialFunction(cases) => {
+        s"partial function ${join(cases)}"
+      }
+      case Placeholder()        => ???
+      case Repeated(expr)       => ???
+      case Return(expr)         => ???
+      case Select(qual, name)   => ???
+      case Super(thisp, superp) => ???
       case This(qual) => {
         qual match {
           case scala.meta.Name.Anonymous() => "this"
@@ -77,7 +81,7 @@ object Describe {
       case Throw(expr)                            => ???
       case Try(expr, catchp, finallyp)            => ???
       case TryWithHandler(expr, catchp, finallyp) => ???
-      case Tuple(args)                            => ???
+      case Tuple(args)                            => tuples(args)
       case While(expr, body)                      => ???
       case Xml(parts, args)                       => ???
     }
@@ -155,7 +159,7 @@ object Describe {
       case Refine(tpe, stats) => {
         mkString(
           "type refinements:",
-          tpe.map(describe).getOrElse(""),
+          option(tpe),
           join(stats)
         )
       }
@@ -173,9 +177,7 @@ object Describe {
       case Singleton(ref) => {
         s"singleton ${describe(ref)}"
       }
-      case Tuple(args) => {
-        s"tuple ${args.size} of ${join(args)}"
-      }
+      case Tuple(args) => tuples(args)
       // case Var(name) => describeType(name)
       case With(lhs, rhs) => {
         s"${describe(lhs)} with ${describe(rhs)}"
@@ -186,18 +188,40 @@ object Describe {
   def describePat(pat: Pat): String = {
     import Pat._
 
+    def interpolation(prefix: String, parts: List[Tree], args: List[Tree]): String = {
+      val body =
+        args.zip(parts.tail).foldLeft(describe(parts.head)) {
+          case (acc, (l, r)) =>
+            val dr = describe(r)
+
+            val sep0 =
+              if (acc.endsWith(" ")) ""
+              else " "
+
+            val sep =
+              if (dr.startsWith(" ")) ","
+              else if (dr.isEmpty) ""
+              else ", "
+
+            acc + sep0 + "extracts " + describe(l) + sep + dr
+        }
+
+      s"$prefix interpolation $body"
+    }
+
     pat match {
-      case Alternative(lhs, rhs)            => ???
-      case Bind(lhs, rhs)                   => ???
-      case Extract(fun, args)               => ???
-      case ExtractInfix(lhs, op, rhs)       => ???
-      case Interpolate(prefix, parts, args) => ???
-      case SeqWildcard()                    => ???
-      case Tuple(args)                      => ???
-      case Typed(lhs, rhs)                  => ???
-      case Var(name)                        => ???
-      case Wildcard()                       => ???
-      case Xml(parts, args)                 => ???
+      case Alternative(lhs, rhs)            => s"${describe(lhs)} or ${describe(rhs)}"
+      case Bind(lhs, rhs)                   => s"${describe(lhs)} bound to ${describe(rhs)}"
+      case Extract(fun, args)               => s"${describe(fun)} extracts ${join(args)}"
+      case ExtractInfix(lhs, op, rhs)       => s"${describe(lhs)} ${describe(op)} ${join(rhs)}"
+      case Interpolate(prefix, parts, args) => interpolation(describe(prefix), parts, args)
+      case SeqWildcard()                    => "multiple placeholders"
+      case Tuple(args)                      => tuples(args)
+      case Typed(lhs, rhs)                  => s"${describe(lhs)} typed ${describe(rhs)}"
+      case Var(name)                        => describe(name)
+      case Wildcard()                       => "placeholder"
+      case Xml(parts, args)                 => interpolation("xml", parts, args)
+      case Term.Name(name)                  => s"exactly $name"
     }
   }
 
@@ -299,7 +323,15 @@ object Describe {
   }
 
   def describeMisc(tree: Tree): String = tree match {
-    case Case(pat, cond, body)         => ???
+    case Case(pat, cond, body) => {
+      mkString(
+        "case",
+        describePat(pat),
+        cond.map(c => s"if ${describe(c)}").getOrElse(""),
+        "then",
+        describe(body)
+      )
+    }
     case Init(tpe, name, argss)        => ???
     case Pkg(ref, stats)               => ???
     case Pkg.Object(mods, name, templ) => ???
@@ -313,8 +345,8 @@ object Describe {
       mkString(
         join(mods),
         describeTree(name),
-        decltpe.map(describe).getOrElse(""),
-        default.map(describe).getOrElse("")
+        option(decltpe),
+        option(default)
       )
     }
     case Type.Bounds(lower, higher) => {
@@ -379,8 +411,14 @@ object Describe {
     )
   }
 
+  private def tuples(args: List[Tree]): String =
+    s"tuple ${args.size} of ${join(args)}"
+
   private def join(args: List[Tree]): String =
     args.map(describe).mkString(", ")
+
+  private def option(opt: Option[Tree]): String =
+    opt.map(describe).getOrElse("")
 
   private def mkString(parts: String*): String = parts.filter(_.nonEmpty).mkString(" ")
 }

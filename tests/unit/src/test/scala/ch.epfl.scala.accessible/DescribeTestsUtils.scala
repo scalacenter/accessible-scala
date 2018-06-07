@@ -39,6 +39,20 @@ trait DescribeTestsUtils extends FunSuite with DiffAssertions with MarkerTestUti
     check[T](annotedSource, expected, dialect, parser = Parse.parseType)
   }
 
+  def checkPat[T <: Pat](
+      annotedSource: String,
+      expected: String,
+      dialect: Dialect = dialects.Scala212)(implicit project: ExtractFrom[T]): Unit = {
+    check[T](annotedSource, expected, dialect, parser = Parse.parsePat)
+  }
+
+  def checkCase[T <: Tree](
+      annotedSource: String,
+      expected: String,
+      dialect: Dialect = dialects.Scala212)(implicit project: ExtractFrom[T]): Unit = {
+    check[T](annotedSource, expected, dialect, parser = Parse.parseCase)
+  }
+
   def check[T <: Tree](
       annotedSource: String,
       expected: String,

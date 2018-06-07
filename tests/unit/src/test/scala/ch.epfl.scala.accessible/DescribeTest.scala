@@ -7,53 +7,64 @@ import scala.meta._
 object DescribeTests extends DescribeTestsUtils {
   
   // Lit
-  // check[Lit]                ("1")
+  // check[Lit]("1")
 
   // Term
-  {
-    import Term._
-    check[This]("this", "this")
-  }
 
   // Type
   {
     import Type._
 
-    checkType[Name]               ("B"                             , "B")
-    checkType[Select]             ("a.B"                           , "select a B")
-    checkType[Project]            ("a#B"                           , "project a B")
-    checkType[Singleton]          ("this.type"                     , "singleton this")
-    checkType[Singleton]          ("t.type"                        , "singleton t")
-    checkType[Apply]              ("F[T]"                          , "F of T")
-    checkType[Apply]              ("Map[K, V]"                     , "Map applied to K, V")
-    checkType[Apply]              ("M[_, _]"                       , "M taking 2 parameters")
-    checkType[ApplyInfix]         ("K Map V"                       , "K Map V")
-    checkType[Function]           ("() => B"                       , "function Unit to B")
-    checkType[Function]           ("A => B"                        , "function A to B")
-    checkType[Function]           ("(A, B) => C"                   , "function A, B to C")
-    checkType[ImplicitFunction]   ("implicit A => B"               , "implicit function A to B", dialect = dotty)
-    checkType[Tuple]              ("(A, B)"                        , "tuple 2 of A, B")
-    checkType[With]               ("A with B"                      , "A with B")
-    checkType[And]                ("A & B"                         , "A and B", dialect = dotty)
-    checkType[Or]                 ("A | B"                         , "A or B", dialect = dotty)
-    checkType[Refine]             ("A { def f: B }"                , "type refinements: A def f returns: B")
-    checkType[Refine]             ("A { }"                         , "type refinements: A")
-    checkType[Refine]             ("{ def f: B }"                  , "type refinements: def f returns: B")
-    // checkType[Existential     ]("A forSome { type T }"          , "")
-    // checkType[Annotate        ]("T @A"                          , "")
-    checkType[Lambda]             ("[X] => (X, X)"                 , "lambda X to tuple 2 of X, X", dialect = dotty)
-    checkType[Placeholder]        ("_"                             , "placeholder")
-    checkType[Bounds]             ("_ >: A <: B"                   , "placeholder super-type of: A sub-type of: B")
-    checkType[Bounds]             ("_ <: B"                        , "placeholder sub-type of: B")
-    checkType[Bounds]             ("_ >: A"                        , "placeholder super-type of: A")
-    checkType[ByName]             ( "=> T"                         , "by name: T")
-    checkType[Repeated]           ("Any*"                          , "repeated: Any")
-    check[Param]                  ("def f[→A <% B[A]←]: C"         , "A view bounded by: B of A.")
-    check[Param]                  ("def f[→A: B←]: C"              , "A context bounded by: B.")
-    check[Param]                  ("def f[→A : B : C←]: D"         , "A context bounded by: B, C.")
+    checkType[Name]             ("B"                     , "B")
+    checkType[Select]           ("a.B"                   , "select a B")
+    checkType[Project]          ("a#B"                   , "project a B")
+    checkType[Singleton]        ("this.type"             , "singleton this")
+    checkType[Singleton]        ("t.type"                , "singleton t")
+    checkType[Apply]            ("F[T]"                  , "F of T")
+    checkType[Apply]            ("Map[K, V]"             , "Map applied to K, V")
+    checkType[Apply]            ("M[_, _]"               , "M taking 2 parameters")
+    checkType[ApplyInfix]       ("K Map V"               , "K Map V")
+    checkType[Function]         ("() => B"               , "function Unit to B")
+    checkType[Function]         ("A => B"                , "function A to B")
+    checkType[Function]         ("(A, B) => C"           , "function A, B to C")
+    checkType[ImplicitFunction] ("implicit A => B"       , "implicit function A to B", dialect = dotty)
+    checkType[Tuple]            ("(A, B)"                , "tuple 2 of A, B")
+    checkType[With]             ("A with B"              , "A with B")
+    checkType[And]              ("A & B"                 , "A and B", dialect = dotty)
+    checkType[Or]               ("A | B"                 , "A or B", dialect = dotty)
+    checkType[Refine]           ("A { def f: B }"        , "type refinements: A def f returns: B")
+    checkType[Refine]           ("A { }"                 , "type refinements: A")
+    checkType[Refine]           ("{ def f: B }"          , "type refinements: def f returns: B")
+    // checkType[Existential]      ("A forSome { type T }"  , "")
+    // checkType[Annotate]         ("T @A"                  , "")
+    checkType[Lambda]           ("[X] => (X, X)"         , "lambda X to tuple 2 of X, X", dialect = dotty)
+    checkType[Placeholder]      ("_"                     , "placeholder")
+    checkType[Bounds]           ("_ >: A <: B"           , "placeholder super-type of: A sub-type of: B")
+    checkType[Bounds]           ("_ <: B"                , "placeholder sub-type of: B")
+    checkType[Bounds]           ("_ >: A"                , "placeholder super-type of: A")
+    checkType[ByName]           ( "=> T"                 , "by name: T")
+    checkType[Repeated]         ("Any*"                  , "repeated: Any")
+    check[Param]                ("def f[→A <% B[A]←]: C" , "A view bounded by: B of A.")
+    check[Param]                ("def f[→A: B←]: C"      , "A context bounded by: B.")
+    check[Param]                ("def f[→A : B : C←]: D" , "A context bounded by: B, C.")
   }
 
   // Pat
+  {
+    import scala.meta.Lit
+    import scala.meta.Pat._
+    checkPat[Bind]         ("a @ A"                  , "a bound to A")
+    checkPat[Wildcard]     ("_"                      , "placeholder")
+    checkPat[SeqWildcard]  ("_*"                     , "multiple placeholders")
+    checkPat[Alternative]  ("a | b"                  , "a or b")
+    checkPat[Tuple]        ("(a, b)"                 , "tuple 2 of a, b")
+    checkPat[Extract]      ("E(a, b)"                , "E extracts a, b")
+    checkPat[ExtractInfix] ("a :: b"                 , "a :: b")
+    checkPat[Interpolate]  (""" s"foo $a bar $b" """ , "s interpolation foo extracts a, bar extracts b")
+    checkPat[Xml]          ("<h1>a{b}c{d}e{f}g</h1>" , "xml interpolation <h1>a extracts b, c extracts d, e extracts f, g</h1>")
+    checkPat[Typed]        ("x: T"                   , "x typed T")
+    checkCase[Lit]         ("→case `foobar` => rhs←" , "case exactly foobar then rhs")
+  }
 
   // Decl
   {

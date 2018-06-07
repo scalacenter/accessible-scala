@@ -1,5 +1,5 @@
 package ch.epfl.scala.accessible
 
-object CursorPlayground extends CursorTestsUtils {
+object Playground extends CursorTestsUtils {
   test("ok") {}
 }
