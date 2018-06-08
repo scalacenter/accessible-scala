@@ -109,6 +109,6 @@ package object accessible {
   }
 
   def pretty(tree: List[Tree], showFields: Boolean): String = {
-    prettyDoc(tree, showFields).render(1) 
+    prettyDoc(tree, showFields).render(1)
   }
 }
