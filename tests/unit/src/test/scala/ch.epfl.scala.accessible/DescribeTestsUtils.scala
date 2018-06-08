@@ -46,13 +46,6 @@ trait DescribeTestsUtils extends FunSuite with DiffAssertions with MarkerTestUti
     check[T](annotedSource, expected, dialect, parser = Parse.parsePat)
   }
 
-  def checkCase[T <: Tree](
-      annotedSource: String,
-      expected: String,
-      dialect: Dialect = dialects.Scala212)(implicit project: ExtractFrom[T]): Unit = {
-    check[T](annotedSource, expected, dialect, parser = Parse.parseCase)
-  }
-
   def check[T <: Tree](
       annotedSource: String,
       expected: String,
@@ -65,6 +58,14 @@ trait DescribeTestsUtils extends FunSuite with DiffAssertions with MarkerTestUti
       val tree = parser(Input.String(source), dialect).get
       val subTree = findTree(tree, selection(annotedSource)).asInstanceOf[project.From]
       val obtained = Describe(subTree)
+      assertNoDiff(obtained, expected)
+    }
+  }
+
+  def check[T <: Tree](tree: T, expected: String): Unit = {
+    val testName = logger.revealWhitespace(tree.syntax)
+    test(testName) {
+      val obtained = Describe(tree)
       assertNoDiff(obtained, expected)
     }
   }

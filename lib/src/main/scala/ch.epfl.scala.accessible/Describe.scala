@@ -94,7 +94,7 @@ object Describe {
       case Assign(lhs, rhs) => {
         s"${describe(lhs)} assigned to ${describe(rhs)}"
       }
-      case Block(stats) => ???
+      case Block(stats) => join(stats)
       case Do(body, expr) => {
         s"do ${describe(body)} while ${describe(expr)}"
       }
@@ -131,28 +131,52 @@ object Describe {
       }
       case Name(value)         => value
       case New(init)           => s"new ${describe(init)}"
-      case NewAnonymous(templ) => ???
+      case NewAnonymous(templ) => s"new anonymous ${describe(templ)}"
       // Term.Param see describeMisc
-      case PartialFunction(cases) => {
-        s"partial function ${join(cases)}"
-      }
+      case PartialFunction(cases) => s"partial function ${join(cases)}"
+
       case Placeholder()        => ???
-      case Repeated(expr)       => ???
-      case Return(expr)         => ???
-      case Select(qual, name)   => ???
-      case Super(thisp, superp) => ???
+      case Repeated(expr)       => s"repeated ${describe(expr)}"
+      case Return(expr)         => s"returns ${describe(expr)}"
+      case Select(qual, name)   => s"${describe(qual)} dot ${describe(name)}"
+      case Super(thisp, superp) => mkString(describe(thisp), "super", describe(superp))
       case This(qual) => {
-        qual match {
-          case scala.meta.Name.Anonymous() => "this"
-          case scala.meta.Name(value)      => s"this within $value"
-        }
+
+        val qualRes =
+          qual match {
+            case scala.meta.Name.Anonymous() => ""
+            case scala.meta.Name(value)      => s"within $value"
+          }
+
+        mkString("this", qualRes)
       }
-      case Throw(expr)                            => ???
-      case Try(expr, catchp, finallyp)            => ???
-      case TryWithHandler(expr, catchp, finallyp) => ???
-      case Tuple(args)                            => tuples(args)
-      case While(expr, body)                      => ???
-      case Xml(parts, args)                       => ???
+      case Throw(expr) => s"throw ${describe(expr)}"
+      case Try(expr, catchp, finallyp) => {
+        val catchpRes =
+          if (catchp.nonEmpty) "catch " + join(catchp)
+          else ""
+
+        mkString(
+          "try",
+          describe(expr),
+          catchpRes,
+          finallyp.map(f => "finally " + describe(f)).getOrElse("")
+        )
+
+      }
+      case TryWithHandler(expr, catchp, finallyp) => {
+        mkString(
+          "try",
+          describe(expr),
+          "catch",
+          describe(catchp),
+          finallyp.map(f => "finally " + describe(f)).getOrElse("")
+        )
+      }
+      case Tuple(args)       => tuples(args)
+      case While(expr, body) => s"while ${describe(expr)} do ${describe(body)}"
+      case Xml(parts, args) =>
+        joinParts("xml literal", "scala expression", parts, args, isInterpolation = false)
     }
   }
 
@@ -314,8 +338,15 @@ object Describe {
       case Object(mods, name, templ)                          => ???
       case Trait(mods, name, tparams, ctor, templ)            => ???
       case Type(mods, name, tparams, body)                    => ???
-      case Val(mods, pats, decltpe, rhs)                      => ???
-      case Var(mods, pats, decltpe, rhs)                      => ???
+      case Val(mods, pats, decltpe, rhs) => {
+        mkString(
+          join(mods),
+          "val",
+          join(pats),
+          describe(rhs)
+        )
+      }
+      case Var(mods, pats, decltpe, rhs) => ???
     }
   }
 
@@ -383,14 +414,41 @@ object Describe {
         describe(body)
       )
     }
-    case Init(tpe, Name.Anonymous(), argss) => ???
-    case Pkg(ref, stats)                    => ???
-    case Pkg.Object(mods, name, templ)      => ???
-    case Self(name, decltpe)                => ???
-    case Source(stats)                      => ???
+    case Init(tpe, Name.Anonymous(), argss) => {
+      val argssRes =
+        if (argss.nonEmpty)
+          "applied to " + argss.map(_.map(describe).mkString(", ")).mkString(" then ")
+        else ""
+
+      mkString(
+        describe(tpe),
+        argssRes
+      )
+    }
+    case Pkg(ref, stats)               => ???
+    case Pkg.Object(mods, name, templ) => ???
+
+    case Self(Name.Anonymous(), None) => ""
+    case Self(name, decltpe) => {
+      mkString(
+        "self type",
+        describe(name),
+        decltpe.map(d => "typed as: " + describe(d)).getOrElse("")
+      )
+    }
+    case Source(stats) => ???
     case Template(early, inits, self, stats) => {
-      // todo
-      ""
+
+      val earlyRes =
+        if (early.nonEmpty) "early initialization: " + join(early)
+        else ""
+
+      mkString(
+        earlyRes,
+        join(inits),
+        describe(self),
+        join(stats)
+      )
     }
     case Term.Param(mods, name, decltpe, default) => {
       mkString(
@@ -433,10 +491,20 @@ object Describe {
         cboundsRes
       )
     }
-
+    case Name.Indeterminate(value) => value
+    case Name.Anonymous()          => ""
   }
 
-  def interpolation(prefix: String, verb: String, parts: List[Tree], args: List[Tree]): String = {
+  def joinParts(prefix: String,
+                verb: String,
+                parts: List[Tree],
+                args: List[Tree],
+                isInterpolation: Boolean): String = {
+
+    val prefix0 =
+      if (isInterpolation) s"$prefix interpolation"
+      else prefix
+
     val body =
       args.zip(parts.tail).foldLeft(describe(parts.head)) {
         case (acc, (l, r)) =>
@@ -454,8 +522,11 @@ object Describe {
           acc + sep0 + verb + " " + describe(l) + sep + dr
       }
 
-    s"$prefix interpolation $body"
+    s"$prefix0 $body"
   }
+
+  def interpolation(prefix: String, verb: String, parts: List[Tree], args: List[Tree]): String =
+    joinParts(prefix, verb, parts, args, isInterpolation = true)
 
   private def dDef(mods: List[Mod],
                    name: Term.Name,
