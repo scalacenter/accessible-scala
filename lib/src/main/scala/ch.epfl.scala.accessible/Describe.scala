@@ -50,7 +50,7 @@ object Describe {
     import Term._
 
     term match {
-      case Annotate(expr, annots) => ???
+      case Annotate(expr, annots) => TODO
       case Apply(fun, args) => {
         s"${describe(fun)} applied to ${join(args)}"
       }
@@ -94,15 +94,15 @@ object Describe {
       case Assign(lhs, rhs) => {
         s"${describe(lhs)} assigned to ${describe(rhs)}"
       }
-      case Block(stats) => join(stats)
+      case Block(stats) => TODO
       case Do(body, expr) => {
         s"do ${describe(body)} while ${describe(expr)}"
       }
       case Eta(expr) => {
         s"η-conversion of ${describe(expr)}"
       }
-      case For(enums, body)      => ???
-      case ForYield(enums, body) => ???
+      case For(enums, body)      => TODO
+      case ForYield(enums, body) => TODO
       case Function(params, body) => {
         val dParams =
           if (params.nonEmpty) join(params)
@@ -135,7 +135,7 @@ object Describe {
       // Term.Param see describeMisc
       case PartialFunction(cases) => s"partial function ${join(cases)}"
 
-      case Placeholder()        => ???
+      case Placeholder()        => TODO
       case Repeated(expr)       => s"repeated ${describe(expr)}"
       case Return(expr)         => s"returns ${describe(expr)}"
       case Select(qual, name)   => s"${describe(qual)} dot ${describe(name)}"
@@ -307,9 +307,11 @@ object Describe {
       case Def(mods, name, tparams, paramss, decltpe) => {
         dDef(mods, name, tparams, paramss, Some(decltpe), None)
       }
-      case Type(mods, name, tparams, bounds) => ???
-      case Val(mods, pats, decltpe)          => ???
-      case Var(mods, pats, decltpe)          => ???
+      case Type(mods, name, tparams, bounds) => {
+        TODO
+      }
+      case Val(mods, pats, decltpe)          => TODO
+      case Var(mods, pats, decltpe)          => TODO
     }
   }
 
@@ -334,19 +336,20 @@ object Describe {
       case Def(mods, name, tparams, paramss, decltpe, body) => {
         dDef(mods, name, tparams, paramss, decltpe, Some(body))
       }
-      case Macro(mods, name, tparams, paramss, decltpe, body) => ???
-      case Object(mods, name, templ)                          => ???
-      case Trait(mods, name, tparams, ctor, templ)            => ???
-      case Type(mods, name, tparams, body)                    => ???
-      case Val(mods, pats, decltpe, rhs) => {
-        mkString(
-          join(mods),
-          "val",
-          join(pats),
-          describe(rhs)
-        )
-      }
-      case Var(mods, pats, decltpe, rhs) => ???
+      case Macro(mods, name, tparams, paramss, decltpe, body) => TODO
+      case Object(mods, name, templ)                          => TODO
+      case Trait(mods, name, tparams, ctor, templ)            => TODO
+      case Type(mods, name, tparams, body)                    => TODO
+      case Val(mods, pats, decltpe, rhs) => TODO
+      // case Val(mods, pats, decltpe, rhs) => {
+      //   mkString(
+      //     join(mods),
+      //     "val",
+      //     join(pats),
+      //     describe(rhs)
+      //   )
+      // }
+      case Var(mods, pats, decltpe, rhs) => TODO
     }
   }
 
@@ -365,7 +368,7 @@ object Describe {
     }
 
     mod match {
-      case Annot(init)         => ???
+      case Annot(init)         => TODO
       case Mod.Covariant()     => "co-variant"
       case Mod.Contravariant() => "contra-variant"
       case Private(within)     => scoped("private", within)
@@ -378,9 +381,9 @@ object Describe {
     import Enumerator._
 
     enum match {
-      case Generator(pat, rhs) => ???
-      case Guard(cond)         => ???
-      case Val(pat, rhs)       => ???
+      case Generator(pat, rhs) => TODO
+      case Guard(cond)         => TODO
+      case Val(pat, rhs)       => TODO
     }
   }
 
@@ -391,17 +394,17 @@ object Describe {
       case Primary(mods, name, paramss) => {
         ""
       }
-      case Secondary(mods, name, paramss, init, stats) => ???
+      case Secondary(mods, name, paramss, init, stats) => TODO
     }
   }
 
   def describeImports(tree: Tree): String = tree match {
-    case Import(importers)             => ???
-    case Importee.Name(name)           => ???
-    case Importee.Rename(name, rename) => ???
-    case Importee.Unimport(name)       => ???
-    case Importee.Wildcard()           => ???
-    case Importer(ref, importees)      => ???
+    case Import(importers)             => TODO
+    case Importee.Name(name)           => TODO
+    case Importee.Rename(name, rename) => TODO
+    case Importee.Unimport(name)       => TODO
+    case Importee.Wildcard()           => TODO
+    case Importer(ref, importees)      => TODO
   }
 
   def describeMisc(tree: Tree): String = tree match {
@@ -425,8 +428,8 @@ object Describe {
         argssRes
       )
     }
-    case Pkg(ref, stats)               => ???
-    case Pkg.Object(mods, name, templ) => ???
+    case Pkg(ref, stats)               => TODO
+    case Pkg.Object(mods, name, templ) => TODO
 
     case Self(Name.Anonymous(), None) => ""
     case Self(name, decltpe) => {
@@ -436,7 +439,7 @@ object Describe {
         decltpe.map(d => "typed as: " + describe(d)).getOrElse("")
       )
     }
-    case Source(stats) => ???
+    case Source(stats) => TODO
     case Template(early, inits, self, stats) => {
 
       val earlyRes =
@@ -564,4 +567,16 @@ object Describe {
     opt.map(describe).getOrElse("")
 
   private def mkString(parts: String*): String = parts.filter(_.nonEmpty).mkString(" ")
+
+  import scala.util.control.NoStackTrace
+  private class `__TODO__`(line: sourcecode.Line, name: sourcecode.FullName) extends NoStackTrace {
+    override def getMessage: String = {
+      val short = name.value.split('.').toList.reverse.take(2).drop(1).head
+      s"\n\n\n  $short:${line.value}\n\n"
+    }
+  }
+
+  private def TODO(implicit line: sourcecode.Line, name: sourcecode.FullName): Nothing = {
+    throw new `__TODO__`(line, name)
+  }
 }

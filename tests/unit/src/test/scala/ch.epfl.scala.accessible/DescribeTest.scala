@@ -17,6 +17,14 @@ object DescribeTests extends DescribeTestsUtils {
   {
     import scala.meta.Term._
 
+
+    // check[Annotate]        ("(a): @T"                                               , "")
+    // check[Apply]           ("f{x}"                                            , "") // todo apply block
+    // check[Block]           ("{ a; b }"                                          , "a, b")
+    // check[For]             ("for { x <- xs } f"                                   , "")
+    // check[ForYield]        ("for { x <- xs } yield f"                             , "")
+    // check[Param]           ("def f(a: A = da): A"                                 , "")
+    
     check[Apply]           (q"f(a)"                                    , "f applied to a")
     check[Apply]           (q"f({ case a => a })"                      , "f applied to partial function case a then a")
     check[ApplyInfix]      (q"a op b"                                  , "a op b")
@@ -43,8 +51,8 @@ object DescribeTests extends DescribeTestsUtils {
     check[NewAnonymous]    (q"new A{}"                                 , "new anonymous A")
     check[PartialFunction] (q"{ case a => a }"                         , "partial function case a then a")
     check[Repeated]        ("f(→x: _*←)"                               , "repeated x")
-    check[Return]          ("return a"                                 , "returns a")
-    check[Select]          ("a.b"                                      , "a dot b")
+    check[Return]          (q"return a"                                , "returns a")
+    check[Select]          (q"a.b"                                     , "a dot b")
     check[Super]           (q"a.super[B]"                              , "a super B")
     check[Super]           (q"super[B]"                                , "super B")
     check[Super]           (q"a.super"                                 , "a super")
@@ -113,7 +121,7 @@ object DescribeTests extends DescribeTestsUtils {
   // Decl
   {
     import Decl._
-    check[Def]("def f: String", "def f returns: String")
+    check[Def](q"def f: String", "def f returns: String")
   }
 
   // Defn
