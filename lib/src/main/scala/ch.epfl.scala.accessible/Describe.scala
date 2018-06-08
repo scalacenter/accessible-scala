@@ -21,9 +21,9 @@ object Describe {
 
   def apply(tree: Tree): String = describe(tree)
 
-  def describe(tree: Tree): String = describeTree(tree)
+  private def describe(tree: Tree): String = describeTree(tree)
 
-  def describeTree(tree: Tree): String = tree match {
+  private def describeTree(tree: Tree): String = tree match {
     case lit: Lit                              => describeLit(lit)
     case term: Term                            => describeTerm(term)
     case tpe: Type                             => describeType(tpe)
@@ -37,7 +37,7 @@ object Describe {
     case _                                     => describeMisc(tree)
   }
 
-  def describeLit(lit: Lit): String = {
+  private def describeLit(lit: Lit): String = {
     import Lit._
 
     lit match {
@@ -46,7 +46,7 @@ object Describe {
     }
   }
 
-  def describeTerm(term: Term): String = {
+  private def describeTerm(term: Term): String = {
     import Term._
 
     term match {
@@ -56,7 +56,7 @@ object Describe {
       }
       case ApplyInfix(lhs, op, targs, args) => {
         val targsPart =
-          if (targs.nonEmpty) "parametrized with " + join(targs) + " applied to"
+          if (targs.nonEmpty) "parameterized with " + join(targs) + " applied to"
           else ""
 
         val argsPart =
@@ -180,7 +180,7 @@ object Describe {
     }
   }
 
-  def describeType(tpe: Type): String = {
+  private def describeType(tpe: Type): String = {
     import Type._
 
     def function(params: List[Type], res: Type): String = {
@@ -278,7 +278,7 @@ object Describe {
     }
   }
 
-  def describePat(pat: Pat): String = {
+  private def describePat(pat: Pat): String = {
     import Pat._
 
     def patInterpolation(prefix: String, parts: List[Tree], args: List[Tree]): String =
@@ -300,47 +300,64 @@ object Describe {
     }
   }
 
-  def describeDecl(decl: Decl): String = {
+  // private def
+
+  private def describeDecl(decl: Decl): String = {
     import Decl._
 
     decl match {
       case Def(mods, name, tparams, paramss, decltpe) => {
-        dDef(mods, name, tparams, paramss, Some(decltpe), None)
+        describeDef(mods, name, tparams, paramss, Some(decltpe), None)
       }
       case Type(mods, name, tparams, bounds) => {
-        TODO
-      }
-      case Val(mods, pats, decltpe)          => TODO
-      case Var(mods, pats, decltpe)          => TODO
-    }
-  }
-
-  def describeDefn(defn: Defn): String = {
-    import Defn._
-
-    defn match {
-      case Class(mods, name, tparams, ctor, templ) => {
-        val tparamsRes =
-          if (tparams.nonEmpty) tparams.map(describe).mkString("parametrized with: ", ",", "")
+        val boundsSep =
+          if (tparams.nonEmpty) "."
           else ""
 
         mkString(
           join(mods),
+          "type",
+          describe(name),
+          describeTparams(tparams) + boundsSep,
+          describe(bounds)
+        )
+      }
+      case Val(mods, pats, decltpe) => {
+        mkString(
+          join(mods),
+          "val",
+          join(pats),
+          describe(decltpe)
+        )
+      }
+      case Var(mods, pats, decltpe) => {
+        TODO
+      }
+    }
+  }
+
+  private def describeDefn(defn: Defn): String = {
+    import Defn._
+
+    defn match {
+      case Class(mods, name, tparams, ctor, templ) => {
+        mkString(
+          join(mods),
           "class",
           describeType(name),
-          tparamsRes,
+          describeTparams(tparams),
           describe(ctor),
           describe(templ)
         )
       }
       case Def(mods, name, tparams, paramss, decltpe, body) => {
-        dDef(mods, name, tparams, paramss, decltpe, Some(body))
+        describeDef(mods, name, tparams, paramss, decltpe, Some(body))
       }
       case Macro(mods, name, tparams, paramss, decltpe, body) => TODO
       case Object(mods, name, templ)                          => TODO
       case Trait(mods, name, tparams, ctor, templ)            => TODO
       case Type(mods, name, tparams, body)                    => TODO
-      case Val(mods, pats, decltpe, rhs) => TODO
+      case Val(mods, pats, decltpe, rhs)                      => TODO
       // case Val(mods, pats, decltpe, rhs) => {
       //   mkString(
       //     join(mods),
@@ -353,7 +370,7 @@ object Describe {
     }
   }
 
-  def describeMod(mod: Mod): String = {
+  private def describeMod(mod: Mod): String = {
     import Mod._
 
     def scoped(modifier: String, within: Ref): String = {
@@ -377,7 +394,7 @@ object Describe {
     }
   }
 
-  def describeEnum(enum: Enumerator): String = {
+  private def describeEnum(enum: Enumerator): String = {
     import Enumerator._
 
     enum match {
@@ -387,7 +404,7 @@ object Describe {
     }
   }
 
-  def describeCtor(ctor: Ctor): String = {
+  private def describeCtor(ctor: Ctor): String = {
     import Ctor._
 
     ctor match {
@@ -398,7 +415,7 @@ object Describe {
     }
   }
 
-  def describeImports(tree: Tree): String = tree match {
+  private def describeImports(tree: Tree): String = tree match {
     case Import(importers)             => TODO
     case Importee.Name(name)           => TODO
     case Importee.Rename(name, rename) => TODO
@@ -407,7 +424,7 @@ object Describe {
     case Importer(ref, importees)      => TODO
   }
 
-  def describeMisc(tree: Tree): String = tree match {
+  private def describeMisc(tree: Tree): String = tree match {
     case Case(pat, cond, body) => {
       mkString(
         "case",
@@ -477,10 +494,6 @@ object Describe {
         if (cbounds.nonEmpty) cbounds.map(describe).mkString("context bounded by: ", ", ", ".")
         else ""
 
-      val tparamsRes =
-        if (tparams.nonEmpty) tparams.map(describe).mkString("of", ", ", "")
-        else ""
-
       val nameRes =
         if (name.is[Name.Anonymous]) "a parameter"
         else describeTree(name)
@@ -488,7 +501,7 @@ object Describe {
       mkString(
         join(mods),
         nameRes,
-        tparamsRes,
+        describeTparams(tparams),
         describe(tbounds),
         vboundsRes,
         cboundsRes
@@ -498,11 +511,11 @@ object Describe {
     case Name.Anonymous()          => ""
   }
 
-  def joinParts(prefix: String,
-                verb: String,
-                parts: List[Tree],
-                args: List[Tree],
-                isInterpolation: Boolean): String = {
+  private def joinParts(prefix: String,
+                        verb: String,
+                        parts: List[Tree],
+                        args: List[Tree],
+                        isInterpolation: Boolean): String = {
 
     val prefix0 =
       if (isInterpolation) s"$prefix interpolation"
@@ -528,19 +541,18 @@ object Describe {
     s"$prefix0 $body"
   }
 
-  def interpolation(prefix: String, verb: String, parts: List[Tree], args: List[Tree]): String =
+  private def interpolation(prefix: String,
+                            verb: String,
+                            parts: List[Tree],
+                            args: List[Tree]): String =
     joinParts(prefix, verb, parts, args, isInterpolation = true)
 
-  private def dDef(mods: List[Mod],
-                   name: Term.Name,
-                   tparams: List[scala.meta.Type.Param],
-                   paramss: List[List[Term.Param]],
-                   decltpe: Option[scala.meta.Type],
-                   body: Option[Term]): String = {
-
-    val tparamsRes =
-      if (tparams.nonEmpty) tparams.map(describe).mkString("parametrized with: ", ", ", "")
-      else ""
+  private def describeDef(mods: List[Mod],
+                          name: Term.Name,
+                          tparams: List[scala.meta.Type.Param],
+                          paramss: List[List[Term.Param]],
+                          decltpe: Option[scala.meta.Type],
+                          body: Option[Term]): String = {
 
     val paramssRes =
       if (paramss.nonEmpty) paramss.flatMap(_.map(describe)).mkString(", ")
@@ -550,11 +562,16 @@ object Describe {
       join(mods),
       "def",
       describeTree(name),
-      tparamsRes,
+      describeTparams(tparams),
       paramssRes,
       decltpe.map(tpe => "returns: " + describe(tpe)).getOrElse(""),
       body.map(b => "body: " + describe(b)).getOrElse("")
     )
+  }
+
+  private def describeTparams(tparams: List[scala.meta.Type.Param]): String = {
+    if (tparams.nonEmpty) tparams.map(describe).mkString("parameterized with: ", ", ", "")
+    else ""
   }
 
   private def tuples(args: List[Tree]): String =

@@ -28,7 +28,7 @@ object DescribeTests extends DescribeTestsUtils {
     check[Apply]           (q"f(a)"                                    , "f applied to a")
     check[Apply]           (q"f({ case a => a })"                      , "f applied to partial function case a then a")
     check[ApplyInfix]      (q"a op b"                                  , "a op b")
-    check[ApplyInfix]      (q"a op[S, T] b"                            , "a op parametrized with S, T applied to b")
+    check[ApplyInfix]      (q"a op[S, T] b"                            , "a op parameterized with S, T applied to b")
     check[ApplyInfix]      (q"(a, b) op (c, d)"                        , "tuple 2 of a, b op c, d")
     check[ApplyInfix]      (q"a f ()"                                  , "a f empty arguments")
     check[ApplyType]       (q"f[S,T]"                                  , "f applied to types S, T")
@@ -121,14 +121,16 @@ object DescribeTests extends DescribeTestsUtils {
   // Decl
   {
     import Decl._
-    check[Def](q"def f: String", "def f returns: String")
+    check[Def] (q"def f: String"               , "def f returns: String")
+    check[Type](q"type T"                      , "type T")
+    check[Type](q"private type Foo[A, B] <: D" , "private type Foo parameterized with: A, B. sub-type of: D")
   }
 
   // Defn
   {
     import Defn._
     check[Class](q"class A"           , "class A")
-    check[Class](q"class A[T]"        , "class A parametrized with: T")
+    check[Class](q"class A[T]"        , "class A parameterized with: T")
     check[Def]  (q"def f: String = 1" , "def f returns: String body: 1")
     // Val
   }

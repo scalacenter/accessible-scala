@@ -1,5 +1,6 @@
 package ch.epfl.scala.accessible
 
+import scala.util.control.NonFatal
 import org.scalajs.dom.{document, console, window}
 import org.scalajs.dom.raw.HTMLTextAreaElement
 import scala.scalajs.js
@@ -73,7 +74,11 @@ object Main {
               Range(offset, offset)
             }
 
-          f(tree, range)
+          try {
+            f(tree, range)
+          } catch {
+            case NonFatal(e) => e.printStackTrace()
+          }
         }
         case Parsed.Error(pos, message, _) => {
           val range = Range(pos.start, pos.end)
@@ -83,7 +88,7 @@ object Main {
       }
     }
 
-    def runCursor(action: Cursor => Cursor): js.Function1[Editor, Unit] = editor => {
+    def navigateAndDescribe(action: Cursor => Cursor): js.Function1[Editor, Unit] = editor => {
       val doc = editor.getDoc()
       withTree(editor)((tree, range) => {
         val cursor = Cursor(tree, range)
@@ -106,9 +111,23 @@ object Main {
       })
     }
 
-    def breadcrum(editor: Editor): Unit = {
+    def breadcrumbs(editor: Editor): Unit = {
       withTree(editor)((tree, range) => {
         val output = Breadcrumbs(tree, Offset(range.start))
+        speak(output)
+      })
+    }
+
+    def summarize(editor: Editor): Unit = {
+      withTree(editor)((tree, range) => {
+        val output = Summary(tree, Offset(range.start))
+        speak(output)
+      })
+    }
+
+    def describe(editor: Editor): Unit = {
+      withTree(editor)((tree, range) => {
+        val output = Describe(tree, Offset(range.start))
         speak(output)
       })
     }
@@ -147,11 +166,13 @@ object Main {
           "Tab" -> "defaultTab",
           "F2" -> keyFun(toggleSolarized),
           "F3" -> keyFun(toggleSpeech),
-          "Alt-Right" -> runCursor(_.right),
-          "Alt-Left" -> runCursor(_.left),
-          "Alt-Up" -> runCursor(_.up),
-          "Alt-Down" -> runCursor(_.down),
-          s"$ctrl-B" -> keyFun(breadcrum)
+          "Alt-Right" -> navigateAndDescribe(_.right),
+          "Alt-Left" -> navigateAndDescribe(_.left),
+          "Alt-Up" -> navigateAndDescribe(_.up),
+          "Alt-Down" -> navigateAndDescribe(_.down),
+          s"$ctrl-D" -> keyFun(describe),
+          s"$ctrl-S" -> keyFun(summarize),
+          s"$ctrl-B" -> keyFun(breadcrumbs)
         )
       )
       .asInstanceOf[codemirror.Options]
@@ -217,7 +238,15 @@ object Main {
     })
 
     val defaultCode =
-      """|class A {
+      """|/*
+         |Keyboard Shortcuts:
+         |  Navigate and Describe  Alt-Down, Alt-Right, Alt-Left, Alt-Up
+         |  Describe               Ctrl-D
+         |  Summarize              Ctrl-S
+         |  Breadcrumbs            Ctrl-B
+         |
+         |*/
+         |class A {
          |  val a = 1
          |  val b = 2
          |}
