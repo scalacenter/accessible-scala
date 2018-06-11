@@ -4,6 +4,7 @@ package ch.epfl.scala.accessible
 
 import scala.meta._
 
+// ~;unit/testOnly ch.epfl.scala.accessible.DescribeTests;coverageReport
 object DescribeTests extends DescribeTestsUtils {
   
   // Lit
@@ -124,6 +125,7 @@ object DescribeTests extends DescribeTestsUtils {
     check[Def] (q"def f: String"               , "def f returns: String")
     check[Type](q"type T"                      , "type T")
     check[Type](q"private type Foo[A, B] <: D" , "private type Foo parameterized with: A, B. sub-type of: D")
+    check[Val] (q"val a: Int"                  , "val a Int")
   }
 
   // Defn
@@ -133,6 +135,7 @@ object DescribeTests extends DescribeTestsUtils {
     check[Class](q"class A[T]"        , "class A parameterized with: T")
     check[Def]  (q"def f: String = 1" , "def f returns: String body: 1")
     // Val
+
   }
 
   // Mod
@@ -155,6 +158,14 @@ object DescribeTests extends DescribeTestsUtils {
   // Ctor
 
   // Import
+  // Import
+  {
+    check[Import](q"import a.b"        , "import: a b")
+    check[Import](q"import a.b, c.d"   , "import: a b, c d")
+    check[Import](q"import a._"        , "import: a wildcard")
+    check[Import](q"import a.{b => _}" , "import: a unimport b")
+    check[Import](q"import a.{b => c}" , "import: a rename b to c")
+  }
 
   // Misc
   {

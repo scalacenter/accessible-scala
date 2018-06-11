@@ -416,12 +416,12 @@ object Describe {
   }
 
   private def describeImports(tree: Tree): String = tree match {
-    case Import(importers)             => TODO
-    case Importee.Name(name)           => TODO
-    case Importee.Rename(name, rename) => TODO
-    case Importee.Unimport(name)       => TODO
-    case Importee.Wildcard()           => TODO
-    case Importer(ref, importees)      => TODO
+    case Import(importers)             => "import: " + join(importers)
+    case Importee.Name(name)           => describe(name)
+    case Importee.Rename(name, rename) => s"rename ${describe(name)} to ${describe(rename)}"
+    case Importee.Unimport(name)       => s"unimport ${describe(name)}"
+    case Importee.Wildcard()           => "wildcard"
+    case Importer(ref, importees)      => describe(ref) + " " + join(importees)
   }
 
   private def describeMisc(tree: Tree): String = tree match {
