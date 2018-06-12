@@ -122,6 +122,7 @@ object DescribeTests extends DescribeTestsUtils {
   // Decl
   {
     import Decl._
+    check[Def] ( "def f"                       , "def f")
     check[Def] (q"def f: String"               , "def f returns: String")
     check[Type](q"type T"                      , "type T")
     check[Type](q"private type Foo[A, B] <: D" , "private type Foo parameterized with: A, B. sub-type of: D")

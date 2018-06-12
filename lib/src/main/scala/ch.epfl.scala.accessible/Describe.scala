@@ -558,13 +558,20 @@ object Describe {
       if (paramss.nonEmpty) paramss.flatMap(_.map(describe)).mkString(", ")
       else ""
 
+    val decltpeRes =
+      decltpe match {
+        case Some(tpe @ Type.Name(name)) if name == "Unit" && tpe.tokens.isEmpty => ""
+        case Some(tpe) => "returns: " + describe(tpe)
+        case _ => ""
+      }
+
     mkString(
       join(mods),
       "def",
       describeTree(name),
       describeTparams(tparams),
       paramssRes,
-      decltpe.map(tpe => "returns: " + describe(tpe)).getOrElse(""),
+      decltpeRes,
       body.map(b => "body: " + describe(b)).getOrElse("")
     )
   }
