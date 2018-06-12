@@ -356,7 +356,15 @@ object Describe {
       case Macro(mods, name, tparams, paramss, decltpe, body) => TODO
       case Object(mods, name, templ)                          => TODO
       case Trait(mods, name, tparams, ctor, templ)            => TODO
-      case Type(mods, name, tparams, body)                    => TODO
+      case Type(mods, name, tparams, body)                    => {
+        mkString(
+          join(mods),
+          "type",
+          describe(name),
+          describeTparams(tparams),
+          describe(body)
+        )
+      }
       case Val(mods, pats, decltpe, rhs)                      => TODO
       // case Val(mods, pats, decltpe, rhs) => {
       //   mkString(
