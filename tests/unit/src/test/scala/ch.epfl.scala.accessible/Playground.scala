@@ -1,5 +1,7 @@
 package ch.epfl.scala.accessible
 
-object Playground extends CursorTestsUtils {
-  test("ok") {}
+import scala.meta._
+
+object Playground extends DescribeTestsUtils {
+  check[Lit](q"1", "1")
 }

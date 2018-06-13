@@ -23,19 +23,14 @@ There is no integration for emacspeak yet. We would love to have your contributi
 
 # Roadmap
 
-Describe:
-
-* Terms
-
-Cursor:
-
-* Term.Select chain is recursive (a.b.c => a.b => a)
-* Comments (licenses, commented out code)
-* Priority (def name over modifiers)
-
 Integrations:
 
 * emacspeak
+
+Cursor:
+
+* Comments (licenses, commented out code)
+* Priority (def name over modifiers)
 
 Testing:
 

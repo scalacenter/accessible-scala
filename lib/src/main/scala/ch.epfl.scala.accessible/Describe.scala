@@ -3,18 +3,7 @@ package ch.epfl.scala.accessible
 import scala.meta._
 import java.nio.file.Path
 
-import scala.util.control.NoStackTrace
-case class TODO(line: sourcecode.Line, name: sourcecode.FullName) extends NoStackTrace {
-  override def getMessage: String = {
-    val short = name.value.split('.').toList.reverse.take(2).drop(1).head
-    s"\n\n\n  $short:${line.value}\n\n"
-  }
-}
-
 object Describe {
-  private def TODO(implicit line: sourcecode.Line, name: sourcecode.FullName): Nothing = {
-    throw new TODO(line, name)
-  }
 
   def apply(path: Path, offset: Offset): String =
     apply(parse(path), offset)
@@ -44,7 +33,6 @@ object Describe {
     case defn: Defn                            => describeDefn(defn)
     case mod: Mod                              => describeMod(mod)
     case enum: Enumerator                      => describeEnum(enum)
-    case ctor: Ctor                            => describeCtor(ctor)
     case _: Import | _: Importer | _: Importee => describeImports(tree)
     case _                                     => describeMisc(tree)
   }
@@ -62,9 +50,13 @@ object Describe {
     import Term._
 
     term match {
-      case Annotate(expr, annots) => TODO
+      case Annotate(expr, annots) => {
+        s"${describe(expr)} annotated with: ${join(annots)}"
+      }
       case Apply(fun, args) => {
-        s"${describe(fun)} applied to ${join(args)}"
+        val funRes = describe(fun)
+        if (args.nonEmpty) s"$funRes applied to ${join(args)}"
+        else s"call to $funRes"
       }
       case ApplyInfix(lhs, op, targs, args) => {
         val targsPart =
@@ -106,15 +98,29 @@ object Describe {
       case Assign(lhs, rhs) => {
         s"${describe(lhs)} assigned to ${describe(rhs)}"
       }
-      case Block(stats) => TODO
+      case Block(stats) => join(stats)
       case Do(body, expr) => {
         s"do ${describe(body)} while ${describe(expr)}"
       }
       case Eta(expr) => {
         s"η-conversion of ${describe(expr)}"
       }
-      case For(enums, body)      => TODO
-      case ForYield(enums, body) => TODO
+      case For(enums, body) => {
+        mkString(
+          "for",
+          join(enums),
+          "do",
+          describe(body)
+        )
+      }
+      case ForYield(enums, body) => {
+        mkString(
+          "for",
+          join(enums),
+          "yield",
+          describe(body)
+        )
+      }
       case Function(params, body) => {
         val dParams =
           if (params.nonEmpty) join(params)
@@ -146,12 +152,10 @@ object Describe {
       case NewAnonymous(templ) => s"new anonymous ${describe(templ)}"
       // Term.Param see describeMisc
       case PartialFunction(cases) => s"partial function ${join(cases)}"
-
-      case Placeholder()        => TODO
-      case Repeated(expr)       => s"repeated ${describe(expr)}"
-      case Return(expr)         => s"returns ${describe(expr)}"
-      case Select(qual, name)   => s"${describe(qual)} dot ${describe(name)}"
-      case Super(thisp, superp) => mkString(describe(thisp), "super", describe(superp))
+      case Repeated(expr)         => s"repeated ${describe(expr)}"
+      case Return(expr)           => s"returns ${describe(expr)}"
+      case Select(qual, name)     => s"${describe(qual)} dot ${describe(name)}"
+      case Super(thisp, superp)   => mkString(describe(thisp), "super", describe(superp))
       case This(qual) => {
 
         val qualRes =
@@ -283,7 +287,7 @@ object Describe {
         s"singleton ${describe(ref)}"
       }
       case Tuple(args) => tuples(args)
-      // case Var(name) => describeType(name)
+      // case Var(name) => describeType(name) // ???
       case With(lhs, rhs) => {
         s"${describe(lhs)} with ${describe(rhs)}"
       }
@@ -343,7 +347,12 @@ object Describe {
         )
       }
       case Var(mods, pats, decltpe) => {
-        TODO
+        mkString(
+          join(mods),
+          "var",
+          join(pats),
+          describe(decltpe)
+        )
       }
     }
   }
@@ -352,7 +361,7 @@ object Describe {
     import Defn._
 
     defn match {
-      case Class(mods, name, tparams, ctor, templ) => {
+      case Class(mods, name, tparams, ctor, templ) =>
         mkString(
           join(mods),
           "class",
@@ -361,14 +370,32 @@ object Describe {
           describe(ctor),
           describe(templ)
         )
-      }
-      case Def(mods, name, tparams, paramss, decltpe, body) => {
+
+      case Def(mods, name, tparams, paramss, decltpe, body) =>
         describeDef(mods, name, tparams, paramss, decltpe, Some(body))
-      }
-      case Macro(mods, name, tparams, paramss, decltpe, body) => TODO
-      case Object(mods, name, templ)                          => TODO
-      case Trait(mods, name, tparams, ctor, templ)            => TODO
-      case Type(mods, name, tparams, body) => {
+
+      case Macro(mods, name, tparams, paramss, decltpe, body) =>
+        describeDef(mods, name, tparams, paramss, decltpe, Some(body), isMacro = true)
+
+      case Object(mods, name, templ) =>
+        mkString(
+          join(mods),
+          "object",
+          describe(name),
+          describe(templ)
+        )
+
+      case Trait(mods, name, tparams, ctor, templ) =>
+        mkString(
+          join(mods),
+          "trait",
+          describeType(name),
+          describeTparams(tparams),
+          describe(ctor),
+          describe(templ)
+        )
+
+      case Type(mods, name, tparams, body) =>
         mkString(
           join(mods),
           "type",
@@ -376,17 +403,26 @@ object Describe {
           describeTparams(tparams),
           describe(body)
         )
-      }
-      case Val(mods, pats, decltpe, rhs) => TODO
-      // case Val(mods, pats, decltpe, rhs) => {
-      //   mkString(
-      //     join(mods),
-      //     "val",
-      //     join(pats),
-      //     describe(rhs)
-      //   )
-      // }
-      case Var(mods, pats, decltpe, rhs) => TODO
+
+      case Val(mods, pats, decltpe, rhs) =>
+        mkString(
+          join(mods),
+          "val",
+          join(pats),
+          decltpe.map(tpe => "of type: " + describe(tpe)).getOrElse(""),
+          "=",
+          describe(rhs)
+        )
+
+      case Var(mods, pats, decltpe, rhs) =>
+        mkString(
+          join(mods),
+          "var",
+          join(pats),
+          decltpe.map(tpe => "of type: " + describe(tpe)).getOrElse(""),
+          "=",
+          option(rhs)
+        )
     }
   }
 
@@ -405,7 +441,7 @@ object Describe {
     }
 
     mod match {
-      case Annot(init)         => TODO
+      case Annot(init)         => describe(init)
       case Mod.Covariant()     => "co-variant"
       case Mod.Contravariant() => "contra-variant"
       case Private(within)     => scoped("private", within)
@@ -418,20 +454,9 @@ object Describe {
     import Enumerator._
 
     enum match {
-      case Generator(pat, rhs) => TODO
-      case Guard(cond)         => TODO
-      case Val(pat, rhs)       => TODO
-    }
-  }
-
-  private def describeCtor(ctor: Ctor): String = {
-    import Ctor._
-
-    ctor match {
-      case Primary(mods, name, paramss) => {
-        ""
-      }
-      case Secondary(mods, name, paramss, init, stats) => TODO
+      case Generator(pat, rhs) => s"${describe(pat)} in ${describe(rhs)}"
+      case Guard(cond)         => s"if ${describe(cond)}"
+      case Val(pat, rhs)       => s"${describe(pat)} = ${describe(rhs)}"
     }
   }
 
@@ -455,18 +480,27 @@ object Describe {
       )
     }
     case Init(tpe, Name.Anonymous(), argss) => {
-      val argssRes =
-        if (argss.nonEmpty)
-          "applied to " + argss.map(_.map(describe).mkString(", ")).mkString(" then ")
-        else ""
+      val argssRes = curriedCall(argss)
 
       mkString(
         describe(tpe),
         argssRes
       )
     }
-    case Pkg(ref, stats)               => TODO
-    case Pkg.Object(mods, name, templ) => TODO
+    case Pkg(ref, stats) =>
+      mkString(
+        "package",
+        describe(ref),
+        join(stats)
+      )
+
+    case Pkg.Object(mods, name, templ) =>
+      mkString(
+        join(mods),
+        "package object",
+        describe(name),
+        describe(templ)
+      )
 
     case Self(Name.Anonymous(), None) => ""
     case Self(name, decltpe) => {
@@ -476,16 +510,35 @@ object Describe {
         decltpe.map(d => "typed as: " + describe(d)).getOrElse("")
       )
     }
-    case Source(stats) => TODO
-    case Template(early, inits, self, stats) => {
+    case Source(stats) => join(stats)
+    case t @ Template(early, inits, self, stats) => {
+
+      val isTermNewAnon = t.parent.exists(_.is[Term.NewAnonymous])
 
       val earlyRes =
-        if (early.nonEmpty) "early initialization: " + join(early)
+        if (early.nonEmpty) "early initializer: " + join(early)
         else ""
+
+      val initsRes =
+        inits match {
+          case Nil => ""
+          case h :: t => {
+            val keyword =
+              if (early.isEmpty) {
+                if (isTermNewAnon) ""
+                else "extends "
+              } else "with "
+
+            mkString(
+              keyword + describe(h),
+              t.map(init => "with " + describe(init)).mkString(" ")
+            )
+          }
+        }
 
       mkString(
         earlyRes,
-        join(inits),
+        initsRes,
         describe(self),
         join(stats)
       )
@@ -529,6 +582,35 @@ object Describe {
     }
     case Name.Indeterminate(value) => value
     case Name.Anonymous()          => ""
+
+    case Ctor.Primary(mods, Name.Anonymous(), paramss) => {
+      mkString(
+        join(mods),
+        joinParamss(paramss)
+      )
+    }
+    case s @ Ctor.Secondary(mods, _, paramss, Init(_, _, argss), stats) => {
+      val bodySep =
+        if (stats.isEmpty) ""
+        else ","
+
+      val prim = "primary constructor"
+
+      val primaryCall =
+        argss match {
+          case List(Nil) | Nil => s"call to $prim"
+          case _               => mkString(prim, curriedCall(argss))
+        }
+
+      mkString(
+        join(mods),
+        "secondary constructor",
+        joinParamss(paramss),
+        primaryCall,
+        bodySep,
+        join(stats)
+      )
+    }
   }
 
   private def joinParts(prefix: String,
@@ -572,11 +654,10 @@ object Describe {
                           tparams: List[scala.meta.Type.Param],
                           paramss: List[List[Term.Param]],
                           decltpe: Option[scala.meta.Type],
-                          body: Option[Term]): String = {
+                          body: Option[Term],
+                          isMacro: Boolean = false): String = {
 
-    val paramssRes =
-      if (paramss.nonEmpty) paramss.flatMap(_.map(describe)).mkString(", ")
-      else ""
+    val paramssRes = joinParamss(paramss)
 
     val decltpeRes =
       decltpe match {
@@ -585,6 +666,14 @@ object Describe {
         case _                                                                   => ""
       }
 
+    val bodyRes =
+      body
+        .map { b =>
+          val macroKw = if (isMacro) "macro " else ""
+          macroKw + "body: " + describe(b)
+        }
+        .getOrElse("")
+
     mkString(
       join(mods),
       "def",
@@ -592,9 +681,14 @@ object Describe {
       describeTparams(tparams),
       paramssRes,
       decltpeRes,
-      body.map(b => "body: " + describe(b)).getOrElse("")
+      bodyRes
     )
   }
+
+  private def curriedCall(argss: List[List[Term]]): String =
+    if (argss.nonEmpty)
+      "applied to " + argss.map(_.map(describe).mkString(", ")).mkString(" then ")
+    else ""
 
   private def describeTparams(tparams: List[scala.meta.Type.Param]): String = {
     if (tparams.nonEmpty) tparams.map(describe).mkString("parameterized with: ", ", ", "")
@@ -606,6 +700,10 @@ object Describe {
 
   private def join(args: List[Tree]): String =
     args.map(describe).mkString(", ")
+
+  private def joinParamss(paramss: List[List[Term.Param]]): String =
+    if (paramss.nonEmpty) paramss.flatMap(_.map(describe)).mkString(", ")
+    else ""
 
   private def option(opt: Option[Tree]): String =
     opt.map(describe).getOrElse("")
