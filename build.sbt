@@ -184,31 +184,41 @@ lazy val web = project
   .dependsOn(libJS)
   .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin)
 
-lazy val open = taskKey[Unit]("open vscode")
-def openVSCodeTask: Def.Initialize[Task[Unit]] = Def.task {
-  val base = baseDirectory.value
-  val log = streams.value.log
 
-  val path = base.getCanonicalPath
-
+lazy val installDependencies = Def.task[Unit] {
+  val base = (baseDirectory in ThisProject).value
+  val log = (streams in ThisProject).value.log
   if (!(base / "node_module").exists) {
-    "yarn" ! log
-  }
+    val pb =
+      new java.lang.ProcessBuilder("npm", "install")
+        .directory(base)
+        .redirectErrorStream(true)
 
-  s"code --extensionDevelopmentPath=$path" ! log
+    pb ! log
+  }
 }
 
+lazy val open = taskKey[Unit]("open vscode")
+def openVSCodeTask: Def.Initialize[Task[Unit]] = Def.task[Unit] {
+  val base = (baseDirectory in ThisProject).value
+  val log = (streams in ThisProject).value.log
+
+  val path = base.getCanonicalPath
+  s"code --extensionDevelopmentPath=$path" ! log
+  ()
+}.dependsOn(installDependencies)
+
 lazy val publishMarketplace = taskKey[Unit]("publish vscode extension to marketplace")
-def publishMarketplaceTask: Def.Initialize[Task[Unit]] = Def.task {
+def publishMarketplaceTask: Def.Initialize[Task[Unit]] = Def.task[Unit] {
   val ver = version.value
   val log = streams.value.log
   val pb =
-    new java.lang.ProcessBuilder("bash", "-c", "./vsce publish $ver")
+    new java.lang.ProcessBuilder("bash", "-c", "./vsce publish")
       .directory(file("vscode"))
       .redirectErrorStream(true)
-
   pb ! log
-}
+  ()
+}.dependsOn(installDependencies)
 
 lazy val vscode = project
   .in(file("vscode"))
