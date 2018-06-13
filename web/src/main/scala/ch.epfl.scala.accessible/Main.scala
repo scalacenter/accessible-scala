@@ -1,6 +1,5 @@
 package ch.epfl.scala.accessible
 
-import scala.util.control.NonFatal
 import org.scalajs.dom.{document, console, window}
 import org.scalajs.dom.raw.HTMLTextAreaElement
 import scala.scalajs.js
@@ -74,11 +73,7 @@ object Main {
               Range(offset, offset)
             }
 
-          try {
-            f(tree, range)
-          } catch {
-            case NonFatal(e) => e.printStackTrace()
-          }
+          f(tree, range)
         }
         case Parsed.Error(pos, message, _) => {
           val range = Range(pos.start, pos.end)
@@ -94,7 +89,16 @@ object Main {
         val cursor = Cursor(tree, range)
         val nextCursor = action(cursor)
         setSel(editor, nextCursor.current)
-        val summary = Describe(nextCursor.tree)
+
+        val summary =
+          try {
+            Describe(nextCursor.tree)
+          } catch {
+            case todo: TODO => {
+              console.log(s"TODO: $todo")
+              ""
+            }
+          }
 
         if (summary.nonEmpty) {
           speak(summary, punctuation = false)
