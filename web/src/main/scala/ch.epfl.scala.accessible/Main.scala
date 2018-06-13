@@ -90,15 +90,7 @@ object Main {
         val nextCursor = action(cursor)
         setSel(editor, nextCursor.current)
 
-        val summary =
-          try {
-            Describe(nextCursor.tree)
-          } catch {
-            case todo: TODO => {
-              console.log(s"TODO: $todo")
-              ""
-            }
-          }
+        val summary = Describe(nextCursor.tree)
 
         if (summary.nonEmpty) {
           speak(summary, punctuation = false)
