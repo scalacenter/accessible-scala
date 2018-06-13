@@ -15,11 +15,11 @@ install:
   - ps: scoop install sbt0.13
   - copy c:\MinGW\bin\mingw32-make.exe c:\MinGW\bin\make.exe
 
-build_script:
-  - sbt compile
+# build_script:
+#   - sbt compile
   
-test_script:
-  - sbt "%CI_TEST%"
+# test_script:
+#   - sbt "%CI_TEST%"
 
 cache:
   - '%USERPROFILE%\.ivy2\cache'

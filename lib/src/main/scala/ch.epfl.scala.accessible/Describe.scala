@@ -63,7 +63,7 @@ object Describe {
 
     term match {
       case Annotate(expr, annots) => {
-        s"${describe(expr)} annotated with: ${join(annots)}"   
+        s"${describe(expr)} annotated with: ${join(annots)}"
       }
       case Apply(fun, args) => {
         s"${describe(fun)} applied to ${join(args)}"
@@ -513,7 +513,6 @@ object Describe {
         describe(name),
         describe(templ)
       )
-
 
     case Self(Name.Anonymous(), None) => ""
     case Self(name, decltpe) => {
