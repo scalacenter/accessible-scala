@@ -21,187 +21,594 @@ object Describe {
 
   def apply(tree: Tree): String = describe(tree)
 
-  def describe(tree: Tree): String =
-    tree match {
-      // Ctor.Primary(mods: List[Mod], name: Name, paramss: List[List[Term.Param]]) =>
-      case Ctor.Primary(mods, _, paramss) =>
-        ""
+  private def describe(tree: Tree): String = describeTree(tree)
 
-      case Defn.Class(mods, name, tparams, ctor, templ) => {
-        val tparamsRes =
-          if (tparams.nonEmpty) tparams.map(describe).mkString("parametrized with: ", ",", "")
+  private def describeTree(tree: Tree): String = tree match {
+    case lit: Lit                              => describeLit(lit)
+    case term: Term                            => describeTerm(term)
+    case tpe: Type                             => describeType(tpe)
+    case pat: Pat                              => describePat(pat)
+    case decl: Decl                            => describeDecl(decl)
+    case defn: Defn                            => describeDefn(defn)
+    case mod: Mod                              => describeMod(mod)
+    case enum: Enumerator                      => describeEnum(enum)
+    case ctor: Ctor                            => describeCtor(ctor)
+    case _: Import | _: Importer | _: Importee => describeImports(tree)
+    case _                                     => describeMisc(tree)
+  }
+
+  private def describeLit(lit: Lit): String = {
+    import Lit._
+
+    lit match {
+      case Unit() => "unit"
+      case _      => lit.syntax
+    }
+  }
+
+  private def describeTerm(term: Term): String = {
+    import Term._
+
+    term match {
+      case Annotate(expr, annots) => TODO
+      case Apply(fun, args) => {
+        s"${describe(fun)} applied to ${join(args)}"
+      }
+      case ApplyInfix(lhs, op, targs, args) => {
+        val targsPart =
+          if (targs.nonEmpty) "parameterized with " + join(targs) + " applied to"
           else ""
 
-        s"${join(mods)} class ${describe(name)} $tparamsRes ${describe(ctor)} ${describe(templ)}"
+        val argsPart =
+          if (args.nonEmpty) join(args)
+          else "empty arguments"
+
+        mkString(
+          describe(lhs),
+          describe(op),
+          targsPart,
+          argsPart
+        )
+      }
+      case ApplyType(fun, targs) => {
+        val subject =
+          if (targs.size > 1) "types"
+          else "type"
+
+        mkString(
+          describe(fun),
+          "applied to",
+          subject,
+          join(targs)
+        )
       }
 
-      case Defn.Def(mods, name, tparams, paramss, decltpe, body) =>
-        dDef(mods, name, tparams, paramss, decltpe, Some(body))
+      case ApplyUnary(op, arg) => {
+        describe(op) + " " + describe(arg)
+      }
 
-      case Decl.Def(mods, name, tparams, paramss, decltpe) =>
-        dDef(mods, name, tparams, paramss, Some(decltpe), None)
+      case Ascribe(expr, tpe) => {
+        s"${describe(expr)} typed as ${describe(tpe)}"
+      }
 
-      case Mod.Covariant()     => "co-variant"
-      case Mod.Contravariant() => "contra-variant"
+      case Assign(lhs, rhs) => {
+        s"${describe(lhs)} assigned to ${describe(rhs)}"
+      }
+      case Block(stats) => TODO
+      case Do(body, expr) => {
+        s"do ${describe(body)} while ${describe(expr)}"
+      }
+      case Eta(expr) => {
+        s"η-conversion of ${describe(expr)}"
+      }
+      case For(enums, body)      => TODO
+      case ForYield(enums, body) => TODO
+      case Function(params, body) => {
+        val dParams =
+          if (params.nonEmpty) join(params)
+          else "unit"
 
-      // Template(early: List[Stat], inits: List[Init], self: Self, stats: List[Stat])
-      case Template(early, inits, self, stats) =>
-        ""
-      case Term.Name(value) =>
-        value
-      case Term.Param(mods, name, decltpe, default) =>
-        List(
-          join(mods),
-          describe(name),
-          decltpe.map(describe).getOrElse(""),
-          default.map(describe).getOrElse("")
-        ).filter(_.nonEmpty).mkString(" ")
+        "function " + dParams + " to " + describe(body)
+      }
+      case If(cond, thenp, elsep) => {
+        val elseRes =
+          if (elsep.is[Lit.Unit] && elsep.tokens.isEmpty) ""
+          else s"else ${describe(elsep)}"
 
-      case Type.Annotate(tpe, annots) =>
+        mkString(
+          s"if ${describe(cond)} then ${describe(thenp)}",
+          elseRes
+        )
+      }
+      case Interpolate(prefix, parts, args) =>
+        interpolation(describe(prefix), "insert", parts, args)
+      case Match(expr, cases) => {
+        mkString(
+          describe(expr),
+          "match",
+          join(cases)
+        )
+      }
+      case Name(value)         => value
+      case New(init)           => s"new ${describe(init)}"
+      case NewAnonymous(templ) => s"new anonymous ${describe(templ)}"
+      // Term.Param see describeMisc
+      case PartialFunction(cases) => s"partial function ${join(cases)}"
+
+      case Placeholder()        => TODO
+      case Repeated(expr)       => s"repeated ${describe(expr)}"
+      case Return(expr)         => s"returns ${describe(expr)}"
+      case Select(qual, name)   => s"${describe(qual)} dot ${describe(name)}"
+      case Super(thisp, superp) => mkString(describe(thisp), "super", describe(superp))
+      case This(qual) => {
+
+        val qualRes =
+          qual match {
+            case scala.meta.Name.Anonymous() => ""
+            case scala.meta.Name(value)      => s"within $value"
+          }
+
+        mkString("this", qualRes)
+      }
+      case Throw(expr) => s"throw ${describe(expr)}"
+      case Try(expr, catchp, finallyp) => {
+        val catchpRes =
+          if (catchp.nonEmpty) "catch " + join(catchp)
+          else ""
+
+        mkString(
+          "try",
+          describe(expr),
+          catchpRes,
+          finallyp.map(f => "finally " + describe(f)).getOrElse("")
+        )
+
+      }
+      case TryWithHandler(expr, catchp, finallyp) => {
+        mkString(
+          "try",
+          describe(expr),
+          "catch",
+          describe(catchp),
+          finallyp.map(f => "finally " + describe(f)).getOrElse("")
+        )
+      }
+      case Tuple(args)       => tuples(args)
+      case While(expr, body) => s"while ${describe(expr)} do ${describe(body)}"
+      case Xml(parts, args) =>
+        joinParts("xml literal", "scala expression", parts, args, isInterpolation = false)
+    }
+  }
+
+  private def describeType(tpe: Type): String = {
+    import Type._
+
+    def function(params: List[Type], res: Type): String = {
+      val dParams =
+        if (params.nonEmpty) join(params)
+        else "Unit"
+
+      "function " + dParams + " to " + describe(res)
+    }
+
+    tpe match {
+      case And(lhs, rhs) => {
+        s"${describe(lhs)} and ${describe(rhs)}"
+      }
+      case Annotate(tpe, annots) => {
         s"${describe(tpe)} annotated with: ${join(annots)}"
-
-      case Type.Apply(tpt, args) =>
+      }
+      case Apply(tpe, args) => {
         val allPlaceholders = args.forall {
           case Type.Placeholder(Type.Bounds(None, None)) => true
           case _                                         => false
         }
 
-        if (allPlaceholders) s"${describe(tpt)} taking ${args.size} parameters"
+        if (allPlaceholders) s"${describe(tpe)} taking ${args.size} parameters"
         else {
           val verb =
             if (args.size == 1) "of"
             else "applied to"
 
-          List(
-            describe(tpt),
+          mkString(
+            describe(tpe),
             verb,
             join(args)
-          ).filter(_.nonEmpty).mkString(" ")
+          )
+        }
+      }
+      case ApplyInfix(lhs, op, rhs) => {
+        s"${describe(lhs)} ${describe(op)} ${describe(rhs)}"
+      }
+      // Type.Bounds see describeMisc
+      case ByName(tpe) => {
+        "by name: " + describe(tpe)
+      }
+      case Existential(tpe, stats) => {
+        s"existential ${describe(tpe)} for some ${join(stats)}"
+      }
+      case Function(params, res) => {
+        function(params, res)
+      }
+      case ImplicitFunction(params, res) => {
+        "implicit " + function(params, res)
+      }
+      case Lambda(tparams, tpe) => {
+        s"lambda ${join(tparams)} to ${describe(tpe)}"
+      }
+      case Name(value) => {
+        value
+      }
+      case Or(lhs, rhs) => {
+        s"${describe(lhs)} or ${describe(rhs)}"
+      }
+      // Type.Param see describeMisc
+      case Placeholder(bounds) => {
+        "placeholder " + describeMisc(bounds)
+      }
+      case Project(qual, name) => {
+        s"project ${describe(qual)} ${describe(name)}"
+      }
+      case Refine(tpe, stats) => {
+        mkString(
+          "type refinements:",
+          option(tpe),
+          join(stats)
+        )
+      }
+      case Repeated(tpe) => {
+        "repeated: " + describe(tpe)
+      }
+      case Select(qual, name) => {
+        mkString(
+          "select",
+          describe(qual),
+          describe(name)
+        )
+
+      }
+      case Singleton(ref) => {
+        s"singleton ${describe(ref)}"
+      }
+      case Tuple(args) => tuples(args)
+      // case Var(name) => describeType(name)
+      case With(lhs, rhs) => {
+        s"${describe(lhs)} with ${describe(rhs)}"
+      }
+    }
+  }
+
+  private def describePat(pat: Pat): String = {
+    import Pat._
+
+    def patInterpolation(prefix: String, parts: List[Tree], args: List[Tree]): String =
+      interpolation(prefix, "extracts", parts, args)
+
+    pat match {
+      case Alternative(lhs, rhs)            => s"${describe(lhs)} or ${describe(rhs)}"
+      case Bind(lhs, rhs)                   => s"${describe(lhs)} bound to ${describe(rhs)}"
+      case Extract(fun, args)               => s"${describe(fun)} extracts ${join(args)}"
+      case ExtractInfix(lhs, op, rhs)       => s"${describe(lhs)} ${describe(op)} ${join(rhs)}"
+      case Interpolate(prefix, parts, args) => patInterpolation(describe(prefix), parts, args)
+      case SeqWildcard()                    => "multiple placeholders"
+      case Tuple(args)                      => tuples(args)
+      case Typed(lhs, rhs)                  => s"${describe(lhs)} typed as ${describe(rhs)}"
+      case Var(name)                        => describe(name)
+      case Wildcard()                       => "placeholder"
+      case Xml(parts, args)                 => patInterpolation("xml", parts, args)
+      case Term.Name(name)                  => s"exactly $name"
+    }
+  }
+
+  // private def
+
+  private def describeDecl(decl: Decl): String = {
+    import Decl._
+
+    decl match {
+      case Def(mods, name, tparams, paramss, decltpe) => {
+        describeDef(mods, name, tparams, paramss, Some(decltpe), None)
+      }
+      case Type(mods, name, tparams, bounds) => {
+        val boundsSep =
+          if (tparams.nonEmpty) "."
+          else ""
+
+        mkString(
+          join(mods),
+          "type",
+          describe(name),
+          describeTparams(tparams) + boundsSep,
+          describe(bounds)
+        )
+      }
+      case Val(mods, pats, decltpe) => {
+        mkString(
+          join(mods),
+          "val",
+          join(pats),
+          describe(decltpe)
+        )
+      }
+      case Var(mods, pats, decltpe) => {
+        TODO
+      }
+    }
+  }
+
+  private def describeDefn(defn: Defn): String = {
+    import Defn._
+
+    defn match {
+      case Class(mods, name, tparams, ctor, templ) => {
+        mkString(
+          join(mods),
+          "class",
+          describeType(name),
+          describeTparams(tparams),
+          describe(ctor),
+          describe(templ)
+        )
+      }
+      case Def(mods, name, tparams, paramss, decltpe, body) => {
+        describeDef(mods, name, tparams, paramss, decltpe, Some(body))
+      }
+      case Macro(mods, name, tparams, paramss, decltpe, body) => TODO
+      case Object(mods, name, templ)                          => TODO
+      case Trait(mods, name, tparams, ctor, templ)            => TODO
+      case Type(mods, name, tparams, body) => {
+        mkString(
+          join(mods),
+          "type",
+          describe(name),
+          describeTparams(tparams),
+          describe(body)
+        )
+      }
+      case Val(mods, pats, decltpe, rhs) => TODO
+      // case Val(mods, pats, decltpe, rhs) => {
+      //   mkString(
+      //     join(mods),
+      //     "val",
+      //     join(pats),
+      //     describe(rhs)
+      //   )
+      // }
+      case Var(mods, pats, decltpe, rhs) => TODO
+    }
+  }
+
+  private def describeMod(mod: Mod): String = {
+    import Mod._
+
+    def scoped(modifier: String, within: Ref): String = {
+      val scope =
+        within match {
+          case Name.Anonymous() => ""
+          case Name(v)          => s"within $v"
+          case Term.This(_)     => "this"
         }
 
-      case Type.ApplyInfix(lhs, op, rhs) =>
-        s"${describe(lhs)} ${describe(op)} ${describe(rhs)}"
-
-      case Type.Bounds(lower, higher) => {
-        List(
-          lower.map(l => "super-type of: " + describe(l)).getOrElse(""),
-          higher.map(h => "sub-type of: " + describe(h)).getOrElse("")
-        ).filter(_.nonEmpty).mkString(", ")
-      }
-
-      case Type.ByName(tpe) =>
-        "by name: " + describe(tpe)
-
-      case Type.Name(value) =>
-        value
-
-      case Type.Function(params, res) => {
-        val dParams =
-          if (params.nonEmpty) join(params)
-          else "Unit"
-
-        "function " + dParams + " to " + describe(res)
-      }
-      case Type.Param(mods, name, tparams, tbounds, vbounds, cbounds) => {
-
-        val vboundsRes =
-          if (vbounds.nonEmpty) vbounds.map(describe).mkString("view bounded by: ", ", ", ".")
-          else ""
-
-        val cboundsRes =
-          if (cbounds.nonEmpty) cbounds.map(describe).mkString("context bounded by: ", ", ", ".")
-          else ""
-
-        val tparamsRes =
-          if (tparams.nonEmpty) tparams.map(describe).mkString("of", ", ", "")
-          else ""
-
-        val nameRes =
-          if (name.is[Name.Anonymous]) "a parameter"
-          else describe(name)
-
-        List(
-          join(mods),
-          nameRes,
-          tparamsRes,
-          describe(tbounds),
-          vboundsRes,
-          cboundsRes
-        ).filter(_.nonEmpty).mkString(" ")
-      }
-      case Type.Project(qual, name) =>
-        s"${describe(qual)} project ${describe(name)}"
-
-      // class Type.Placeholder(bounds: Bounds)
-
-      case Type.Select(qual, name) =>
-        describe(qual) + " dot " + describe(name)
-      case Type.Singleton(ref) =>
-        s"singleton ${describe(ref)}"
-      case Type.Tuple(args) =>
-        s"tuple ${args.size} of " + join(args)
-
-      case Type.Refine(tpe, stats) =>
-        List(
-          "type refinement: ",
-          tpe.map(describe).getOrElse(""),
-          join(stats)
-        ).filter(_.nonEmpty).mkString(" ")
-
-      case Type.Repeated(tpe) =>
-        "repeated: " + describe(tpe)
-
-      // class Var(name: Name)
-
-      case Type.With(lhs, rhs) =>
-        s"${describe(lhs)} with ${describe(rhs)}"
-
-      // Dotty
-      // class Lambda(tparams: List[Type.Param], tpe: Type)
-      // class ImplicitFunction(params: List[Type], res: Type)
-      // class And(lhs: Type, rhs: Type)
-      // class Or(lhs: Type, rhs: Type)
-
-      // // Synthetic
-      // class Method(paramss: List[List[Term.Param]], tpe: Type)
-
-      // // Todo
-      // class Existential(tpe: Type, stats: List[Stat])
-
-      // case e => e.syntax
-      case _ => ""
+      mkString(modifier, scope)
     }
 
-  private def dDef(mods: List[Mod],
-                   name: Term.Name,
-                   tparams: List[scala.meta.Type.Param],
-                   paramss: List[List[Term.Param]],
-                   decltpe: Option[scala.meta.Type],
-                   body: Option[Term]): String = {
+    mod match {
+      case Annot(init)         => TODO
+      case Mod.Covariant()     => "co-variant"
+      case Mod.Contravariant() => "contra-variant"
+      case Private(within)     => scoped("private", within)
+      case Protected(within)   => scoped("protected", within)
+      case _                   => mod.syntax
+    }
+  }
 
-    val tparamsRes =
-      if (tparams.nonEmpty) tparams.map(describe).mkString("parametrized with: ", ", ", "")
-      else ""
+  private def describeEnum(enum: Enumerator): String = {
+    import Enumerator._
+
+    enum match {
+      case Generator(pat, rhs) => TODO
+      case Guard(cond)         => TODO
+      case Val(pat, rhs)       => TODO
+    }
+  }
+
+  private def describeCtor(ctor: Ctor): String = {
+    import Ctor._
+
+    ctor match {
+      case Primary(mods, name, paramss) => {
+        ""
+      }
+      case Secondary(mods, name, paramss, init, stats) => TODO
+    }
+  }
+
+  private def describeImports(tree: Tree): String = tree match {
+    case Import(importers)             => "import: " + join(importers)
+    case Importee.Name(name)           => describe(name)
+    case Importee.Rename(name, rename) => s"rename ${describe(name)} to ${describe(rename)}"
+    case Importee.Unimport(name)       => s"unimport ${describe(name)}"
+    case Importee.Wildcard()           => "wildcard"
+    case Importer(ref, importees)      => describe(ref) + " " + join(importees)
+  }
+
+  private def describeMisc(tree: Tree): String = tree match {
+    case Case(pat, cond, body) => {
+      mkString(
+        "case",
+        describePat(pat),
+        cond.map(c => s"if ${describe(c)}").getOrElse(""),
+        "then",
+        describe(body)
+      )
+    }
+    case Init(tpe, Name.Anonymous(), argss) => {
+      val argssRes =
+        if (argss.nonEmpty)
+          "applied to " + argss.map(_.map(describe).mkString(", ")).mkString(" then ")
+        else ""
+
+      mkString(
+        describe(tpe),
+        argssRes
+      )
+    }
+    case Pkg(ref, stats)               => TODO
+    case Pkg.Object(mods, name, templ) => TODO
+
+    case Self(Name.Anonymous(), None) => ""
+    case Self(name, decltpe) => {
+      mkString(
+        "self type",
+        describe(name),
+        decltpe.map(d => "typed as: " + describe(d)).getOrElse("")
+      )
+    }
+    case Source(stats) => TODO
+    case Template(early, inits, self, stats) => {
+
+      val earlyRes =
+        if (early.nonEmpty) "early initialization: " + join(early)
+        else ""
+
+      mkString(
+        earlyRes,
+        join(inits),
+        describe(self),
+        join(stats)
+      )
+    }
+    case Term.Param(mods, name, decltpe, default) => {
+      mkString(
+        join(mods),
+        describeTree(name),
+        option(decltpe),
+        option(default)
+      )
+    }
+    case Type.Bounds(lower, higher) => {
+      mkString(
+        lower.map(l => "super-type of: " + describe(l)).getOrElse(""),
+        higher.map(h => "sub-type of: " + describe(h)).getOrElse("")
+      )
+    }
+    case Type.Param(mods, name, tparams, tbounds, vbounds, cbounds) => {
+
+      val vboundsRes =
+        if (vbounds.nonEmpty) vbounds.map(describe).mkString("view bounded by: ", ", ", ".")
+        else ""
+
+      val cboundsRes =
+        if (cbounds.nonEmpty) cbounds.map(describe).mkString("context bounded by: ", ", ", ".")
+        else ""
+
+      val nameRes =
+        if (name.is[Name.Anonymous]) "a parameter"
+        else describeTree(name)
+
+      mkString(
+        join(mods),
+        nameRes,
+        describeTparams(tparams),
+        describe(tbounds),
+        vboundsRes,
+        cboundsRes
+      )
+    }
+    case Name.Indeterminate(value) => value
+    case Name.Anonymous()          => ""
+  }
+
+  private def joinParts(prefix: String,
+                        verb: String,
+                        parts: List[Tree],
+                        args: List[Tree],
+                        isInterpolation: Boolean): String = {
+
+    val prefix0 =
+      if (isInterpolation) s"$prefix interpolation"
+      else prefix
+
+    val body =
+      args.zip(parts.tail).foldLeft(describe(parts.head)) {
+        case (acc, (l, r)) =>
+          val dr = describe(r)
+
+          val sep0 =
+            if (acc.endsWith(" ")) ""
+            else " "
+
+          val sep =
+            if (dr.startsWith(" ")) ","
+            else if (dr.isEmpty) ""
+            else ", "
+
+          acc + sep0 + verb + " " + describe(l) + sep + dr
+      }
+
+    s"$prefix0 $body"
+  }
+
+  private def interpolation(prefix: String,
+                            verb: String,
+                            parts: List[Tree],
+                            args: List[Tree]): String =
+    joinParts(prefix, verb, parts, args, isInterpolation = true)
+
+  private def describeDef(mods: List[Mod],
+                          name: Term.Name,
+                          tparams: List[scala.meta.Type.Param],
+                          paramss: List[List[Term.Param]],
+                          decltpe: Option[scala.meta.Type],
+                          body: Option[Term]): String = {
 
     val paramssRes =
       if (paramss.nonEmpty) paramss.flatMap(_.map(describe)).mkString(", ")
       else ""
 
-    List(
+    val decltpeRes =
+      decltpe match {
+        case Some(tpe @ Type.Name(name)) if name == "Unit" && tpe.tokens.isEmpty => ""
+        case Some(tpe)                                                           => "returns: " + describe(tpe)
+        case _                                                                   => ""
+      }
+
+    mkString(
       join(mods),
       "def",
-      describe(name),
-      tparamsRes,
-      paramssRes
-    ).filter(_.nonEmpty).mkString(" ") +
-      List(
-        decltpe.map(tpe => ".\nreturns: " + describe(tpe)).getOrElse(""),
-        body.map(b => ".\nbody: " + describe(b)).getOrElse(""),
-      ).filter(_.nonEmpty).mkString(" ")
+      describeTree(name),
+      describeTparams(tparams),
+      paramssRes,
+      decltpeRes,
+      body.map(b => "body: " + describe(b)).getOrElse("")
+    )
   }
+
+  private def describeTparams(tparams: List[scala.meta.Type.Param]): String = {
+    if (tparams.nonEmpty) tparams.map(describe).mkString("parameterized with: ", ", ", "")
+    else ""
+  }
+
+  private def tuples(args: List[Tree]): String =
+    s"tuple ${args.size} of ${join(args)}"
 
   private def join(args: List[Tree]): String =
     args.map(describe).mkString(", ")
 
+  private def option(opt: Option[Tree]): String =
+    opt.map(describe).getOrElse("")
+
+  private def mkString(parts: String*): String = parts.filter(_.nonEmpty).mkString(" ")
+
+  import scala.util.control.NoStackTrace
+  private class `__TODO__`(line: sourcecode.Line, name: sourcecode.FullName) extends NoStackTrace {
+    override def getMessage: String = {
+      val short = name.value.split('.').toList.reverse.take(2).drop(1).head
+      s"\n\n\n  $short:${line.value}\n\n"
+    }
+  }
+
+  private def TODO(implicit line: sourcecode.Line, name: sourcecode.FullName): Nothing = {
+    throw new `__TODO__`(line, name)
+  }
 }
-// class TreeMap, parametrized with: A view bound to Comparable of A, B

@@ -74,14 +74,14 @@ object CursorSuite extends CursorTestsUtils {
     )
   }
 
-  test("Shorcut: class name to stat") {
+  test("Shortcut: class name to stat") {
     doFocus(
       "class →A← { def m = 1 }",
       ("class A { →def m = 1← }", down)
     )
   }
 
-  test("Shorcut: object name to stat") {
+  test("Shortcut: object name to stat") {
     doFocus(
       "object →A← { def m1 = 1 }",
       ("object A { →def m1 = 1← }", down)
@@ -154,6 +154,11 @@ object CursorSuite extends CursorTestsUtils {
     )
   }
 
+  // TODO don't navigate inside of arg
+  // "class A { foo.bar(arg).→buzz← }",
+  // ("class A { foo.→bar(arg)←.buzz }", left),
+  // ("class A { →foo←.bar(arg).buzz }", left)
+
   test("navigate apply/select chains right to left ") {
     doFocus(
       "class A { foo.bar(arg).→buzz← }",
@@ -184,6 +189,12 @@ object CursorSuite extends CursorTestsUtils {
       ("class A { →a← op b op (c, d) }", left)
     )
   }
+
+  // TODO: match could be part of the select chain
+  // doFocus(
+  //   "class A { a.→b← match { case _ => () } }",
+  //   ("class A { a.b match { →case _ => ()← } }", right)
+  // )
 
   test("large example") {
     import java.nio.file.{Paths, Files}

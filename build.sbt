@@ -58,7 +58,8 @@ lazy val testsShared = project
   .settings(
     libraryDependencies ++= Seq(
       "com.lihaoyi" %% "utest" % "0.6.3",
-      "org.scalameta" %% "testkit" % metaV
+      "org.scalameta" %% "testkit" % metaV,
+      "com.lihaoyi" %%% "sourcecode" % "0.1.4"
     )
   )
   .dependsOn(libJVM)
