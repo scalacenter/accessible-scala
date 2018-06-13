@@ -343,7 +343,12 @@ object Describe {
         )
       }
       case Var(mods, pats, decltpe) => {
-        TODO
+        mkString(
+          join(mods),
+          "var",
+          join(pats),
+          describe(decltpe)
+        )
       }
     }
   }
@@ -352,7 +357,7 @@ object Describe {
     import Defn._
 
     defn match {
-      case Class(mods, name, tparams, ctor, templ) => {
+      case Class(mods, name, tparams, ctor, templ) =>
         mkString(
           join(mods),
           "class",
@@ -361,14 +366,32 @@ object Describe {
           describe(ctor),
           describe(templ)
         )
-      }
-      case Def(mods, name, tparams, paramss, decltpe, body) => {
+
+      case Def(mods, name, tparams, paramss, decltpe, body) =>
         describeDef(mods, name, tparams, paramss, decltpe, Some(body))
-      }
-      case Macro(mods, name, tparams, paramss, decltpe, body) => TODO
-      case Object(mods, name, templ)                          => TODO
-      case Trait(mods, name, tparams, ctor, templ)            => TODO
-      case Type(mods, name, tparams, body) => {
+
+      case Macro(mods, name, tparams, paramss, decltpe, body) =>
+        describeDef(mods, name, tparams, paramss, decltpe, Some(body), isMacro = true)
+
+      case Object(mods, name, templ) =>
+        mkString(
+          join(mods),
+          "object",
+          describe(name),
+          describe(templ)
+        )
+
+      case Trait(mods, name, tparams, ctor, templ) =>
+        mkString(
+          join(mods),
+          "trait",
+          describeType(name),
+          describeTparams(tparams),
+          describe(ctor),
+          describe(templ)
+        )
+
+      case Type(mods, name, tparams, body) =>
         mkString(
           join(mods),
           "type",
@@ -376,8 +399,8 @@ object Describe {
           describeTparams(tparams),
           describe(body)
         )
-      }
-      case Val(mods, pats, decltpe, rhs) => {
+
+      case Val(mods, pats, decltpe, rhs) =>
         mkString(
           join(mods),
           "val",
@@ -385,8 +408,8 @@ object Describe {
           "=",
           describe(rhs)
         )
-      }
-      case Var(mods, pats, decltpe, rhs) => {
+
+      case Var(mods, pats, decltpe, rhs) =>
         mkString(
           join(mods),
           "var",
@@ -394,7 +417,6 @@ object Describe {
           "=",
           option(rhs)
         )
-      }
     }
   }
 
@@ -473,8 +495,22 @@ object Describe {
         argssRes
       )
     }
-    case Pkg(ref, stats)               => TODO
-    case Pkg.Object(mods, name, templ) => TODO
+    case Pkg(ref, stats) =>
+      mkString(
+        "package",
+        describe(ref),
+        ".",
+        join(stats)
+      )
+
+    case Pkg.Object(mods, name, templ) =>
+      mkString(
+        join(mods),
+        "package object",
+        describe(name),
+        ".",
+        describe(templ)
+      )
 
     case Self(Name.Anonymous(), None) => ""
     case Self(name, decltpe) => {
@@ -599,7 +635,8 @@ object Describe {
                           tparams: List[scala.meta.Type.Param],
                           paramss: List[List[Term.Param]],
                           decltpe: Option[scala.meta.Type],
-                          body: Option[Term]): String = {
+                          body: Option[Term],
+                          isMacro: Boolean = false): String = {
 
     val paramssRes =
       if (paramss.nonEmpty) paramss.flatMap(_.map(describe)).mkString(", ")
@@ -612,6 +649,14 @@ object Describe {
         case _                                                                   => ""
       }
 
+    val bodyRes =
+      body
+        .map { b =>
+          val macroKw = if (isMacro) "macro " else ""
+          macroKw + "body: " + describe(b)
+        }
+        .getOrElse("")
+
     mkString(
       join(mods),
       "def",
@@ -619,7 +664,7 @@ object Describe {
       describeTparams(tparams),
       paramssRes,
       decltpeRes,
-      body.map(b => "body: " + describe(b)).getOrElse("")
+      bodyRes
     )
   }
 

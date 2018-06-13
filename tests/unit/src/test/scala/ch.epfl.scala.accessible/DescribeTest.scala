@@ -136,10 +136,14 @@ object DescribeTests extends DescribeTestsUtils {
     check[Class] (q"class A[T]"                       , "class A parameterized with: T")
     check[Class] (q"class A extends B with C with D"  , "class A extends B with C with D")
     check[Def]   (q"def f: String = 1"                , "def f returns: String body: 1")
+    check[Macro] (q"def f: Int = macro impl"          , "def f returns: Int macro body: impl")
+    check[Object](q"object A"                         , "object A")
+    check[Trait] (q"trait A"                          , "trait A")
     check[Type]  (q"type T = Int"                     , "type T Int")
     check[Type]  (q"private type Foo[A] = Int"        , "private type Foo parameterized with: A Int")
     check[Val]   (q"val a = 1"                        , "val a = 1")
     check[Val]   (q"val (x, y) = (1, 2)"              , "val tuple 2 of x, y = tuple 2 of 1, 2")
+    check[Var]   (q"var a = 1"                        , "var a = 1")
   }
 
   // Mod
@@ -173,6 +177,8 @@ object DescribeTests extends DescribeTestsUtils {
 
   // Misc
   {
+    check[Pkg]("package a.b { class C }", "package a dot b . class C" )
+    check[Pkg.Object]("package object a { val a = 1 }", "package object a . val a = 1" )
     // Init
     // Self
   }
