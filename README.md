@@ -11,7 +11,7 @@ Scala is proudly a welcoming environment for all. One way to maintain and demons
 
 ## Web Demo
 
-http://masseguillaume.github.io/accessible-scala-web/
+http://scalacenter.github.io/accessible-scala-demo/
 
 ## Visual Studio Code
 
