@@ -109,12 +109,12 @@ lazy val scalajsSettings = Seq(
 lazy val deployWeb = taskKey[Unit]("Deploy web demo")
 def deployWebTask: Def.Initialize[Task[Unit]] = Def.task {
   // todo manual steps
-  // created GitHub repo at https://github.com/MasseGuillaume/accessible-scala-web
-  // activated GitHub Pages at https://github.com/MasseGuillaume/accessible-scala-web/settings
+  // created GitHub repo at https://github.com/scalacenter/accessible-scala-demo
+  // activated GitHub Pages at https://github.com/scalacenter/accessible-scala-demo/settings
   // master branch
 
   // cd ..
-  // cd accessible-scala-web
+  // cd accessible-scala-demo
   // git commit -am "."
   // git push origin master
 }
