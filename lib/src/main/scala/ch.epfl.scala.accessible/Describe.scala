@@ -377,16 +377,24 @@ object Describe {
           describe(body)
         )
       }
-      case Val(mods, pats, decltpe, rhs) => TODO
-      // case Val(mods, pats, decltpe, rhs) => {
-      //   mkString(
-      //     join(mods),
-      //     "val",
-      //     join(pats),
-      //     describe(rhs)
-      //   )
-      // }
-      case Var(mods, pats, decltpe, rhs) => TODO
+      case Val(mods, pats, decltpe, rhs) => {
+        mkString(
+          join(mods),
+          "val",
+          join(pats),
+          "=",
+          describe(rhs)
+        )
+      }
+      case Var(mods, pats, decltpe, rhs) => {
+        mkString(
+          join(mods),
+          "var",
+          join(pats),
+          "=",
+          option(rhs)
+        )
+      }
     }
   }
 
@@ -476,16 +484,35 @@ object Describe {
         decltpe.map(d => "typed as: " + describe(d)).getOrElse("")
       )
     }
-    case Source(stats) => TODO
-    case Template(early, inits, self, stats) => {
+    case Source(stats) => join(stats)
+    case t @ Template(early, inits, self, stats) => {
+
+      val isTermNewAnon = t.parent.exists(_.is[Term.NewAnonymous])
 
       val earlyRes =
         if (early.nonEmpty) "early initialization: " + join(early)
         else ""
 
+      val initsRes =
+        inits match {
+          case Nil => ""
+          case h :: t => {
+            val keyword =
+              if (early.isEmpty) {
+                if (isTermNewAnon) ""
+                else "extends "
+              } else "with "
+
+            mkString(
+              keyword + describe(h),
+              t.map(init => "with " + describe(init)).mkString(" ")
+            )
+          }
+        }
+
       mkString(
         earlyRes,
-        join(inits),
+        initsRes,
         describe(self),
         join(stats)
       )

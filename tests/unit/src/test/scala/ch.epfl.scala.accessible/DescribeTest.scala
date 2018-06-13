@@ -132,13 +132,14 @@ object DescribeTests extends DescribeTestsUtils {
   // Defn
   {
     import Defn._
-    check[Class](q"class A"                   , "class A")
-    check[Class](q"class A[T]"                , "class A parameterized with: T")
-    check[Def]  (q"def f: String = 1"         , "def f returns: String body: 1")
-    check[Type] (q"type T = Int"              , "type T Int")
-    check[Type] (q"private type Foo[A] = Int" , "private type Foo parameterized with: A Int")
-    // Val
-
+    check[Class] (q"class A"                          , "class A")
+    check[Class] (q"class A[T]"                       , "class A parameterized with: T")
+    check[Class] (q"class A extends B with C with D"  , "class A extends B with C with D")
+    check[Def]   (q"def f: String = 1"                , "def f returns: String body: 1")
+    check[Type]  (q"type T = Int"                     , "type T Int")
+    check[Type]  (q"private type Foo[A] = Int"        , "private type Foo parameterized with: A Int")
+    check[Val]   (q"val a = 1"                        , "val a = 1")
+    check[Val]   (q"val (x, y) = (1, 2)"              , "val tuple 2 of x, y = tuple 2 of 1, 2")
   }
 
   // Mod
