@@ -62,7 +62,9 @@ object Describe {
     import Term._
 
     term match {
-      case Annotate(expr, annots) => TODO
+      case Annotate(expr, annots) => {
+        s"${describe(expr)} annotated with: ${join(annots)}"   
+      }
       case Apply(fun, args) => {
         s"${describe(fun)} applied to ${join(args)}"
       }
@@ -106,7 +108,7 @@ object Describe {
       case Assign(lhs, rhs) => {
         s"${describe(lhs)} assigned to ${describe(rhs)}"
       }
-      case Block(stats) => TODO
+      case Block(stats) => join(stats)
       case Do(body, expr) => {
         s"do ${describe(body)} while ${describe(expr)}"
       }
@@ -405,6 +407,7 @@ object Describe {
           join(mods),
           "val",
           join(pats),
+          decltpe.map(tpe => "of type: " + describe(tpe)).getOrElse(""),
           "=",
           describe(rhs)
         )
@@ -414,6 +417,7 @@ object Describe {
           join(mods),
           "var",
           join(pats),
+          decltpe.map(tpe => "of type: " + describe(tpe)).getOrElse(""),
           "=",
           option(rhs)
         )
@@ -435,7 +439,7 @@ object Describe {
     }
 
     mod match {
-      case Annot(init)         => TODO
+      case Annot(init)         => describe(init)
       case Mod.Covariant()     => "co-variant"
       case Mod.Contravariant() => "contra-variant"
       case Private(within)     => scoped("private", within)
@@ -499,7 +503,6 @@ object Describe {
       mkString(
         "package",
         describe(ref),
-        ".",
         join(stats)
       )
 
@@ -508,9 +511,9 @@ object Describe {
         join(mods),
         "package object",
         describe(name),
-        ".",
         describe(templ)
       )
+
 
     case Self(Name.Anonymous(), None) => ""
     case Self(name, decltpe) => {
@@ -526,7 +529,7 @@ object Describe {
       val isTermNewAnon = t.parent.exists(_.is[Term.NewAnonymous])
 
       val earlyRes =
-        if (early.nonEmpty) "early initialization: " + join(early)
+        if (early.nonEmpty) "early initializer: " + join(early)
         else ""
 
       val initsRes =
