@@ -14,7 +14,7 @@ object BreadcrumbsTests extends FunSuite with DiffAssertions {
        |    }
        |  }
        |}""".stripMargin,
-    """package a, object b, class c, def m"""
+    """package a object b class c def m"""
   )
 
   def check(source: String, expected: String): Unit = {

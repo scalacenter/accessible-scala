@@ -1,5 +1,6 @@
 package ch.epfl.scala.accessible
 
+import scala.util.control.NonFatal
 import org.scalajs.dom.{document, console, window}
 import org.scalajs.dom.raw.HTMLTextAreaElement
 import scala.scalajs.js
@@ -9,43 +10,30 @@ import scala.meta._
 object Main {
   def main(args: Array[String]): Unit = {
     import CodeMirrorExtensions._
-    // import Mespeak._
     Mespeak.loadConfig(MespeakConfig)
     Mespeak.loadVoice(`en/en-us`)
 
     var speechOn = true
-    val speakOptions = new SpeakOptions {
-      override val speed = 300
-      override val punct = true
-    }
-    def speak(utterance: String, force: Boolean = false): Unit = {
+    def speak(utterance: String, force: Boolean = false, punctuation: Boolean = true): Unit = {
+      // limit to 100 chars to avoid hanging the browser
+      val limit = 100
+
       if (speechOn || force) {
         Mespeak.stop()
-        Mespeak.speak(utterance, speakOptions)
+        Mespeak.speak(utterance.take(limit), new SpeakOptions {
+          override val speed = 250
+          override val punct = punctuation
+        })
       }
     }
 
     Mespeak.speak("Welcome to accessible-scaa-laa demo!", new SpeakOptions {
       override val speed = 300
     })
-    console.log("Welcome to accessible-scaa-laa demo!")
+    // console.log("Welcome to accessible-scaa-laa demo!")
 
     CLike
     Sublime
-
-    val code =
-      """|class A {
-         |  val a = 1
-         |  val b = 2
-         |}
-         |
-         |class B
-         |
-         |class D[T1, T2] extends B with C {
-         |
-         |}""".stripMargin
-
-    // Example.code
 
     val isMac = window.navigator.userAgent.contains("Mac")
     val ctrl = if (isMac) "Cmd" else "Ctrl"
@@ -67,12 +55,12 @@ object Main {
       editor.scrollIntoView(start, 10)
     }
 
-    def runCursor(action: Cursor => Cursor): js.Function1[Editor, Unit] = editor => {
+    def withTree(editor: Editor)(f: (Tree, Range) => Unit): Unit = {
       val doc = editor.getDoc()
       val code = doc.getValue()
 
       code.parse[Source] match {
-        case Parsed.Success(tree) =>
+        case Parsed.Success(tree) => {
           val selections = doc.listSelections()
           val range =
             if (selections.size >= 1) {
@@ -86,36 +74,66 @@ object Main {
               Range(offset, offset)
             }
 
-          val cursor = Cursor(tree, range)
-          val nextCursor = action(cursor)
-          setSel(editor, nextCursor.current)
-
-          if (speechOn) {
-            val summary = Summary(nextCursor.tree)
-
-            val output =
-              if (summary.nonEmpty) {
-                summary
-              } else {
-                // fallback to selected text
-                val range = nextCursor.current
-
-                val start = doc.posFromIndex(range.start)
-                val end = doc.posFromIndex(range.end)
-
-                doc.getRange(start, end)
-              }
-
-            speak(output)
+          try {
+            f(tree, range)
+          } catch {
+            case NonFatal(e) => e.printStackTrace()
           }
-
-        case _ => ()
+        }
+        case Parsed.Error(pos, message, _) => {
+          val range = Range(pos.start, pos.end)
+          speak(message)
+          setSel(editor, range)
+        }
       }
     }
 
-    def keyFun(body: Editor => Unit): js.Function1[Editor, Unit] = { editor =>
-      body(editor)
+    def navigateAndDescribe(action: Cursor => Cursor): js.Function1[Editor, Unit] = editor => {
+      val doc = editor.getDoc()
+      withTree(editor)((tree, range) => {
+        val cursor = Cursor(tree, range)
+        val nextCursor = action(cursor)
+        setSel(editor, nextCursor.current)
+        val summary = Describe(nextCursor.tree)
+
+        if (summary.nonEmpty) {
+          speak(summary, punctuation = false)
+        } else {
+          // fallback to selected text
+          val range = nextCursor.current
+
+          val start = doc.posFromIndex(range.start)
+          val end = doc.posFromIndex(range.end)
+
+          val output = doc.getRange(start, end)
+          speak(output)
+        }
+      })
     }
+
+    def breadcrumbs(editor: Editor): Unit = {
+      withTree(editor)((tree, range) => {
+        val output = Breadcrumbs(tree, Offset(range.start))
+        speak(output)
+      })
+    }
+
+    def summarize(editor: Editor): Unit = {
+      withTree(editor)((tree, range) => {
+        val output = Summary(tree, Offset(range.start))
+        speak(output)
+      })
+    }
+
+    def describe(editor: Editor): Unit = {
+      withTree(editor)((tree, range) => {
+        val output = Describe(tree, Offset(range.start))
+        speak(output)
+      })
+    }
+
+    def keyFun(body: Editor => Unit): js.Function1[Editor, Unit] =
+      editor => body(editor)
 
     def toggleSpeech(editor: Editor): Unit = {
       speechOn = !speechOn
@@ -148,10 +166,13 @@ object Main {
           "Tab" -> "defaultTab",
           "F2" -> keyFun(toggleSolarized),
           "F3" -> keyFun(toggleSpeech),
-          "Alt-Right" -> runCursor(_.right),
-          "Alt-Left" -> runCursor(_.left),
-          "Alt-Up" -> runCursor(_.up),
-          "Alt-Down" -> runCursor(_.down)
+          "Alt-Right" -> navigateAndDescribe(_.right),
+          "Alt-Left" -> navigateAndDescribe(_.left),
+          "Alt-Up" -> navigateAndDescribe(_.up),
+          "Alt-Down" -> navigateAndDescribe(_.down),
+          s"$ctrl-D" -> keyFun(describe),
+          s"$ctrl-S" -> keyFun(summarize),
+          s"$ctrl-B" -> keyFun(breadcrumbs)
         )
       )
       .asInstanceOf[codemirror.Options]
@@ -216,6 +237,32 @@ object Main {
       }
     })
 
-    editor.getDoc().setValue(code)
+    val defaultCode =
+      """|/*
+         |Keyboard Shortcuts:
+         |  Navigate and Describe  Alt-Down, Alt-Right, Alt-Left, Alt-Up
+         |  Describe               Ctrl-D
+         |  Summarize              Ctrl-S
+         |  Breadcrumbs            Ctrl-B
+         |
+         |*/
+         |class A {
+         |  val a = 1
+         |  val b = 2
+         |}
+         |
+         |class B
+         |
+         |class D[T1, T2] extends B with C {
+         |
+         |}""".stripMargin
+
+    val localStorageKey = "code"
+    val initialCode = Option(window.localStorage.getItem(localStorageKey)).getOrElse(defaultCode)
+
+    editor.getDoc().setValue(initialCode)
+    editor.onChange((_, _) => {
+      window.localStorage.setItem(localStorageKey, editor.getDoc().getValue())
+    })
   }
 }

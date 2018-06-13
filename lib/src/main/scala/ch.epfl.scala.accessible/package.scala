@@ -1,10 +1,11 @@
 package ch.epfl.scala
 
 import scala.meta._
+
 import java.nio.file.{Files, Path}
 import java.nio.charset.StandardCharsets
 
-package object accessible {
+package object accessible extends TreeStructureUtils {
   def parse(path: Path): Tree = {
     val text = new String(Files.readAllBytes(path), StandardCharsets.UTF_8)
     val input = Input.String(text)

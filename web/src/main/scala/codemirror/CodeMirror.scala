@@ -100,6 +100,8 @@ trait Range extends js.Object {
 object CodeMirrorExtensions {
   implicit class EditorEventHandler(val editor: Editor) extends AnyVal {
     def onKeyDown(f: (Editor, KeyboardEvent) => Unit): Unit = editor.on("keydown", f)
+    def onChange(f: (Editor, js.Object) => Unit): Unit =
+      editor.on("change", f)
     def onBeforeSelectionChange(f: (Editor, SelectionChange) => Unit): Unit =
       editor.on("beforeSelectionChange", f)
     def onKeyHandled(f: (Editor, String, KeyboardEvent) => Unit): Unit = editor.on("keyHandled", f)

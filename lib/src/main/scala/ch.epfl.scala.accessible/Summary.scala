@@ -17,6 +17,9 @@ object Summary {
   def apply(path: Path, offset: Option[Offset]): String =
     apply(parse(path), offset)
 
+  def apply(tree: Tree, offset: Offset): String =
+    visitNames(tree, Some(offset))
+
   def apply(tree: Tree, offset: Option[Offset]): String =
     visitNames(tree, offset)
 
@@ -56,22 +59,9 @@ object Summary {
     case t: Defn.Object => childrens("object", t.name.value, t.templ.stats)
     case t: Defn.Class  => childrens("class", t.name.value, t.templ.stats)
     case t: Pkg         => childrens("package", packageName(t.ref), t.stats)
-    case t: Pkg.Object =>
-      childrens("package object", t.name.value, t.templ.stats)
-    case t: Template => childrens(t.stats)
-    case e => {
-      visitDefinition(e)
-      // val full = e.getClass.toString
-      // val lastDollard = full.lastIndexOf("$")
-
-      // val short =
-      //   if (lastDollard != -1)
-      //     full.slice(lastDollard + 1, full.size - "Impl".size)
-      //   else "???"
-
-      // s"not implemented: childrens of $short"
-      ""
-    }
+    case t: Pkg.Object  => childrens("package object", t.name.value, t.templ.stats)
+    case t: Template    => childrens(t.stats)
+    case e              => visitDefinition(e)
   }
 
   private def childrens(stats: List[Stat]): String = {
@@ -129,7 +119,6 @@ object Summary {
 
     case imp: Import =>
       ""
-
     case e =>
       println(s"** Missing: ${e.getClass.toString} **")
       ""

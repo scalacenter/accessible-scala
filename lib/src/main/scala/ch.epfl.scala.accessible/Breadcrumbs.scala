@@ -22,6 +22,6 @@ object Breadcrumbs {
     visit(tree)
 
     val trees = visited.result()
-    trees.map(Summary.visitDefinition).filterNot(_.isEmpty).mkString(", ")
+    trees.map(Summary.visitDefinition).filterNot(_.isEmpty).mkString(" ")
   }
 }
