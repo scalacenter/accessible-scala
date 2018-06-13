@@ -356,7 +356,7 @@ object Describe {
       case Macro(mods, name, tparams, paramss, decltpe, body) => TODO
       case Object(mods, name, templ)                          => TODO
       case Trait(mods, name, tparams, ctor, templ)            => TODO
-      case Type(mods, name, tparams, body)                    => {
+      case Type(mods, name, tparams, body) => {
         mkString(
           join(mods),
           "type",
@@ -365,7 +365,7 @@ object Describe {
           describe(body)
         )
       }
-      case Val(mods, pats, decltpe, rhs)                      => TODO
+      case Val(mods, pats, decltpe, rhs) => TODO
       // case Val(mods, pats, decltpe, rhs) => {
       //   mkString(
       //     join(mods),
@@ -569,8 +569,8 @@ object Describe {
     val decltpeRes =
       decltpe match {
         case Some(tpe @ Type.Name(name)) if name == "Unit" && tpe.tokens.isEmpty => ""
-        case Some(tpe) => "returns: " + describe(tpe)
-        case _ => ""
+        case Some(tpe)                                                           => "returns: " + describe(tpe)
+        case _                                                                   => ""
       }
 
     mkString(
