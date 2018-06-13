@@ -3,7 +3,19 @@ package ch.epfl.scala.accessible
 import scala.meta._
 import java.nio.file.Path
 
+import scala.util.control.NoStackTrace
+case class TODO(line: sourcecode.Line, name: sourcecode.FullName) extends NoStackTrace {
+  override def getMessage: String = {
+    val short = name.value.split('.').toList.reverse.take(2).drop(1).head
+    s"\n\n\n  $short:${line.value}\n\n"
+  }
+}
+
 object Describe {
+  private def TODO(implicit line: sourcecode.Line, name: sourcecode.FullName): Nothing = {
+    throw new TODO(line, name)
+  }
+
   def apply(path: Path, offset: Offset): String =
     apply(parse(path), offset)
 
@@ -599,16 +611,4 @@ object Describe {
     opt.map(describe).getOrElse("")
 
   private def mkString(parts: String*): String = parts.filter(_.nonEmpty).mkString(" ")
-
-  import scala.util.control.NoStackTrace
-  private class `__TODO__`(line: sourcecode.Line, name: sourcecode.FullName) extends NoStackTrace {
-    override def getMessage: String = {
-      val short = name.value.split('.').toList.reverse.take(2).drop(1).head
-      s"\n\n\n  $short:${line.value}\n\n"
-    }
-  }
-
-  private def TODO(implicit line: sourcecode.Line, name: sourcecode.FullName): Nothing = {
-    throw new `__TODO__`(line, name)
-  }
 }
