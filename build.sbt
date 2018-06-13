@@ -161,13 +161,13 @@ lazy val web = project
 
       val exampleFile = baseDirectory.value / "example" / "Example.scala"
 
-      val example = 
+      val example =
         new String(Files.readAllBytes(exampleFile.toPath), StandardCharsets.UTF_8)
 
       val file = (sourceManaged in Compile).value / "Example.scala"
 
       IO.write(
-        file, 
+        file,
         s"""|package ch.epfl.scala.accessible
             |
             |object Example { 

@@ -234,7 +234,7 @@ object Main {
     })
 
     val defaultCode = Example.code
-      
+
     val localStorageKey = "codev1"
     val initialCode = Option(window.localStorage.getItem(localStorageKey)).getOrElse(defaultCode)
 

@@ -1,4 +1,3 @@
-
 object Playground {
   /*
 
@@ -13,8 +12,8 @@ object Playground {
     Misc
       Toggle Dark/Light    F2
       Toggle Speech        F3
-    
-  */
+
+   */
 
   // == Terms ==
 
@@ -25,10 +24,10 @@ object Playground {
   f { case x => y }
 
   x op y
-  x op[S, T] y
+  x op [S, T] y
   (x, y) op (r, s)
   x f ()
-  f[S,T]
+  f[S, T]
   f[T]
 
   x.y
@@ -37,17 +36,21 @@ object Playground {
 
   new S
   new e.S(x, y)(z)
-  new S{}
+  new S {}
 
   do d while (p)
   while (p) d
-  for ( x <- f ) yield x
-  for ( x <- f; y <- g; z = x; if p(z)) f
+  for (x <- f) yield x
+  for (x <- f; y <- g; z = x; if p(z)) f
 
   throw e
-  try (f) catch { case x => x } finally z
-  try (f) finally z
-  try (f) catch (h) finally z
+  try (f)
+  catch { case x => x } finally z
+  try (f)
+  finally z
+  try (f)
+  catch (h)
+  finally z
 
   x match { case y => y }
 
@@ -68,7 +71,7 @@ object Playground {
   // == Types ==
   f[e.T]
   f[S#T]
-  
+
   f[List[T]]
   f[Map[K, V]]
   f[Map[_, _]]
@@ -79,13 +82,13 @@ object Playground {
   f[(S, T)]
   f[S with T]
   f[S { def f: T }]
-  f[S { }]
+  f[S {}]
   f[{ def f: S }]
   def f[_ >: S <: T]
   def f(f: => T)
   def f(ts: T*)
   def f[_ <% T]
-  def f[_ : B : C]
+  def f[_: B: C]
   trait S { def me: this.type }
 
   // == Patterns ==
@@ -120,7 +123,8 @@ object Playground {
   class S extends { val x = 1 } with B with C
   class S { def this(a: Int) { this() } }
   class S(x: Long) { def this(y: Int) { this(0L); g() } }
-  trait S { x: T => }
+  trait S { x: T =>
+  }
 
   def f = 1
   def f: Int = 1
