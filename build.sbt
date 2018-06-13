@@ -155,6 +155,31 @@ lazy val web = project
     webpackResources := webpackDir.value * "*.js",
     webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly(),
     webpackBundlingMode in fullOptJS := BundlingMode.Application,
+    sourceGenerators in Compile += Def.task {
+      import java.nio.file.{Paths, Files}
+      import java.nio.charset.StandardCharsets
+
+      val exampleFile = baseDirectory.value / "example" / "Example.scala"
+
+      val example = 
+        new String(Files.readAllBytes(exampleFile.toPath), StandardCharsets.UTF_8)
+
+      val file = (sourceManaged in Compile).value / "Example.scala"
+
+      IO.write(
+        file, 
+        s"""|package ch.epfl.scala.accessible
+            |
+            |object Example { 
+            |  val code =
+            |\"\"\"
+            |$example
+            |\"\"\"
+            |}""".stripMargin
+      )
+      Seq(file)
+
+    }.taskValue
   )
   .dependsOn(libJS)
   .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin)

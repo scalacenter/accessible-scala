@@ -20,14 +20,14 @@ object Main {
       if (speechOn || force) {
         Mespeak.stop()
         Mespeak.speak(utterance.take(limit), new SpeakOptions {
-          override val speed = 250
+          override val speed = 200
           override val punct = punctuation
         })
       }
     }
 
     Mespeak.speak("Welcome to accessible-scaa-laa demo!", new SpeakOptions {
-      override val speed = 300
+      override val speed = 200
     })
     // console.log("Welcome to accessible-scaa-laa demo!")
 
@@ -233,27 +233,9 @@ object Main {
       }
     })
 
-    val defaultCode =
-      """|/*
-         |Keyboard Shortcuts:
-         |  Navigate and Describe  Alt-Down, Alt-Right, Alt-Left, Alt-Up
-         |  Describe               Ctrl-D
-         |  Summarize              Ctrl-S
-         |  Breadcrumbs            Ctrl-B
-         |
-         |*/
-         |class A {
-         |  val a = 1
-         |  val b = 2
-         |}
-         |
-         |class B
-         |
-         |class D[T1, T2] extends B with C {
-         |
-         |}""".stripMargin
-
-    val localStorageKey = "code"
+    val defaultCode = Example.code
+      
+    val localStorageKey = "codev1"
     val initialCode = Option(window.localStorage.getItem(localStorageKey)).getOrElse(defaultCode)
 
     editor.getDoc().setValue(initialCode)

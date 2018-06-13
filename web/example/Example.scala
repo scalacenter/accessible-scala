@@ -41,8 +41,8 @@ object Playground {
 
   do d while (p)
   while (p) d
-  for ( x <- xs ) yield x
-  for (xs <- xss; s <- xs; z = s; if z > 0) f
+  for ( x <- f ) yield x
+  for ( x <- f; y <- g; z = x; if p(z)) f
 
   throw e
   try (f) catch { case x => x } finally z
