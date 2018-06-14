@@ -41,10 +41,26 @@
   },
   "contributes": {
     "keybindings": [
-      { "command": "accessibleScala.goLeft",  "key": "alt+left" , "when": "editorTextFocus" },
-      { "command": "accessibleScala.goRight", "key": "alt+right", "when": "editorTextFocus" },
-      { "command": "accessibleScala.goUp",    "key": "alt+up"   , "when": "editorTextFocus" },
-      { "command": "accessibleScala.goDown",  "key": "alt+down" , "when": "editorTextFocus" }
+      {
+        "command": "accessibleScala.goLeft",
+        "key": "alt+left",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "accessibleScala.goRight",
+        "key": "alt+right",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "accessibleScala.goUp",
+        "key": "alt+up",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "accessibleScala.goDown",
+        "key": "alt+down",
+        "when": "editorTextFocus"
+      }
     ]
   }
 }

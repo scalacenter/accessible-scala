@@ -127,6 +127,13 @@ object CursorSuite extends CursorTestsUtils {
     )
   }
 
+  test("dive down into new") {
+    doFocus(
+      "class A { val a = →new S(x, y)← }",
+      ("class A { val a = new →S←(x, y) }", down)
+    )
+  }
+
   test("dive down apply/select chains") {
     doFocus(
       "class A { →a.b← }",
