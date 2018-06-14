@@ -16,7 +16,7 @@ const ProdConfig =
   })
 
 const Common = require('./webpack.common.js');
-const publicFolderName = "out/accessible-scala-web"
+const publicFolderName = "out/accessible-scala-demo"
 const outFolder = Path.resolve(__dirname, "out")
 
 function extract(){
@@ -33,7 +33,7 @@ function Web(extractSass){
     output: {
       filename: '[name].js',
       path: Path.resolve(__dirname, publicFolderName),
-      publicPath: '/accessible-scala-web/',
+      publicPath: '/accessible-scala-demo/',
       libraryTarget: 'window'
     },
     resolve: {

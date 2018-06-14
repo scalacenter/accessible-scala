@@ -109,12 +109,12 @@ lazy val scalajsSettings = Seq(
 lazy val deployWeb = taskKey[Unit]("Deploy web demo")
 def deployWebTask: Def.Initialize[Task[Unit]] = Def.task {
   // todo manual steps
-  // created GitHub repo at https://github.com/MasseGuillaume/accessible-scala-web
-  // activated GitHub Pages at https://github.com/MasseGuillaume/accessible-scala-web/settings
+  // created GitHub repo at https://github.com/scalacenter/accessible-scala-demo
+  // activated GitHub Pages at https://github.com/scalacenter/accessible-scala-demo/settings
   // master branch
 
   // cd ..
-  // cd accessible-scala-web
+  // cd accessible-scala-demo
   // git commit -am "."
   // git push origin master
 }
@@ -155,6 +155,31 @@ lazy val web = project
     webpackResources := webpackDir.value * "*.js",
     webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly(),
     webpackBundlingMode in fullOptJS := BundlingMode.Application,
+    sourceGenerators in Compile += Def.task {
+      import java.nio.file.{Paths, Files}
+      import java.nio.charset.StandardCharsets
+
+      val exampleFile = baseDirectory.value / "example" / "Example.scala"
+
+      val example =
+        new String(Files.readAllBytes(exampleFile.toPath), StandardCharsets.UTF_8)
+
+      val file = (sourceManaged in Compile).value / "Example.scala"
+
+      IO.write(
+        file,
+        s"""|package ch.epfl.scala.accessible
+            |
+            |object Example { 
+            |  val code =
+            |\"\"\"
+            |$example
+            |\"\"\"
+            |}""".stripMargin
+      )
+      Seq(file)
+
+    }.taskValue
   )
   .dependsOn(libJS)
   .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin)
