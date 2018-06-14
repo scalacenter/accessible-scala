@@ -1,7 +1,7 @@
 {
   "name": "accessible-scala",
   "description": "Scala support for blind and partially-sighted developers",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "keywords": [
     "scala",
     "accessibility"
@@ -41,10 +41,26 @@
   },
   "contributes": {
     "keybindings": [
-      { "command": "accessibleScala.goLeft",  "key": "alt+left" , "when": "editorTextFocus" },
-      { "command": "accessibleScala.goRight", "key": "alt+right", "when": "editorTextFocus" },
-      { "command": "accessibleScala.goUp",    "key": "alt+up"   , "when": "editorTextFocus" },
-      { "command": "accessibleScala.goDown",  "key": "alt+down" , "when": "editorTextFocus" }
+      {
+        "command": "accessibleScala.goLeft",
+        "key": "alt+left",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "accessibleScala.goRight",
+        "key": "alt+right",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "accessibleScala.goUp",
+        "key": "alt+up",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "accessibleScala.goDown",
+        "key": "alt+down",
+        "when": "editorTextFocus"
+      }
     ]
   }
 }

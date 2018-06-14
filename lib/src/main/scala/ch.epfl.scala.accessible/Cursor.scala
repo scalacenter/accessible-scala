@@ -96,11 +96,13 @@ object Cursor {
 
   def getChildren(tree: Tree, parent: Tree): Vector[Tree] = {
     def default = getChildren(tree, isDown = true, isLeft = false)
+
     (tree, parent) match {
       case (t: Term.Block, _) => {
         if (t.stats.nonEmpty) Vector(t.stats.head)
         else default
       }
+      case (t: Term.New, _)              => Vector(t.init.tpe)
       case (_, t: Defn.Def)              => Vector(t.body)
       case (_, t: Defn.Macro)            => Vector(t.body)
       case (_, t: Defn.Object)           => t.templ.stats.toVector
