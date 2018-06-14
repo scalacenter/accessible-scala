@@ -1,7 +1,7 @@
 {
   "name": "accessible-scala",
   "description": "Scala support for blind and partially-sighted developers",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "keywords": [
     "scala",
     "accessibility"

@@ -6,7 +6,7 @@ object AccessibleScalaBuild extends AutoPlugin {
   override def trigger: PluginTrigger = allRequirements
   override def requires: Plugins = JvmPlugin
   override def globalSettings: Seq[Def.Setting[_]] = List(
-    version := "0.1.2",
+    version := "0.2.0",
     scalaVersion := "2.12.6",
     scalacOptions ++= Seq(
       "-Xlint",
