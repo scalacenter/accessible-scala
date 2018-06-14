@@ -120,6 +120,13 @@ object CursorSuite extends CursorTestsUtils {
     )
   }
 
+  test("dive down into block") {
+    doFocus(
+      "class A { def f = →{ x; y }← }",
+      ("class A { def f = { →x←; y } }", down)
+    )
+  }
+
   test("dive down apply/select chains") {
     doFocus(
       "class A { →a.b← }",

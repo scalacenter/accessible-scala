@@ -5,6 +5,7 @@ import org.scalajs.dom.raw.HTMLTextAreaElement
 import scala.scalajs.js
 import codemirror._
 import scala.meta._
+import scala.util.control.NonFatal
 
 object Main {
   def main(args: Array[String]): Unit = {
@@ -29,7 +30,7 @@ object Main {
     Mespeak.speak("Welcome to accessible-scaa-laa demo!", new SpeakOptions {
       override val speed = 200
     })
-    // console.log("Welcome to accessible-scaa-laa demo!")
+    console.log("Welcome to accessible-scaa-laa demo!")
 
     CLike
     Sublime
@@ -90,7 +91,14 @@ object Main {
         val nextCursor = action(cursor)
         setSel(editor, nextCursor.current)
 
-        val summary = Describe(nextCursor.tree)
+        val summary =
+          try {
+            Describe(nextCursor.tree)
+          } catch {
+            case NonFatal(e) =>
+              e.printStackTrace()
+              ""
+          }
 
         if (summary.nonEmpty) {
           speak(summary, punctuation = false)
