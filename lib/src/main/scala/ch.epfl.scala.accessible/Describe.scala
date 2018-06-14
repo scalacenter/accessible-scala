@@ -152,6 +152,7 @@ object Describe {
       case NewAnonymous(templ) => s"new anonymous ${describe(templ)}"
       // Term.Param see describeMisc
       case PartialFunction(cases) => s"partial function ${join(cases)}"
+      case Placeholder()          => "placeholder"
       case Repeated(expr)         => s"repeated ${describe(expr)}"
       case Return(expr)           => s"returns ${describe(expr)}"
       case Select(qual, name)     => s"${describe(qual)} dot ${describe(name)}"
