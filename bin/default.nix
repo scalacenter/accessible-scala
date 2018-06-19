@@ -13,12 +13,21 @@ in rec {
     shellHook = ''
     alias cls=clear
     '';
-    ESPEAK_LIB_PATH = espeak + "/lib";
-    buildInputs = [
+    CLANG_PATH = pkgs.clang + "/bin/clang";
+    CLANGPP_PATH = pkgs.clang + "/bin/clang++";
+
+    buildInputs = with pkgs; [
+      boehmgc
+      clang
       espeak
-      pkgs.openjdk
-      pkgs.stdenv
-      pkgs.cmake
+      libunwind
+      openjdk
+      openjdk
+      stdenv
+      re2
+      sbt
+      stdenv
+      zlib
     ];
   };
-} 
+}

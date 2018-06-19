@@ -1,57 +1,67 @@
 import sbtcrossproject.{crossProject, CrossType}
 import scala.sys.process._
 
-lazy val metaV = "3.7.4"
-
-val pluginPath = Def.setting {
+lazy val metaV = "4.0.0-M3"
+lazy val pluginPath = Def.setting {
   (baseDirectory in ThisBuild).value / "sublime-text" / "accessible-scala"
 }
 
-val libraryPath = Def.setting {
-  val targetDir = pluginPath.value / "bin"
-  val libs = List(
-    sys.env.get("ESPEAK_LIB_PATH"),
-    Some(targetDir)
-  ).flatten
-  "-Djava.library.path=" + libs.mkString(":")
-}
+lazy val nativeSettings = Seq(
+  scalaVersion := "2.11.12",
+  nativeGC := "immix"
+)
 
 lazy val cli = project
   .in(file("cli"))
+  .settings(nativeSettings)
   .settings(
-    fork in run := true,
-    javaOptions in run += libraryPath.value,
-    moduleName := "accessible-scala",
-    mainClass.in(assembly) := Some("ch.epfl.scala.accessible.Main"),
-    assemblyOutputPath in assembly := pluginPath.value / "ascala.jar"
+    moduleName := "accessible-scala-cli",
+    inConfig(Compile)(artifactPath in nativeLink := pluginPath.value / "accessible-scala")
   )
-  .dependsOn(libJVM, espeak)
+  .enablePlugins(ScalaNativePlugin)
+  .dependsOn(libNative, espeak, cliArgsNative)
 
-lazy val lib = crossProject(JSPlatform, JVMPlatform)
+lazy val cliArgs = crossProject(JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
-  .in(file("lib"))
+  .in(file("cli-args"))
+  .nativeSettings(nativeSettings)
   .settings(
-    libraryDependencies ++= List(
-      "org.typelevel" %%% "paiges-cats" % "0.2.1",
-      "com.lihaoyi" %%% "pprint" % "0.5.2",
-      "com.lihaoyi" %%% "fansi" % "0.2.5" % Test,
-      "org.scalameta" %%% "scalameta" % metaV,
-      "org.scalameta" %%% "contrib" % metaV
+    moduleName := "accessible-scala-cli-args",
+    buildInfoKeys := Seq[BuildInfoKey](moduleName, version),
+    buildInfoPackage := "build",
+    libraryDependencies ++= Seq(
+      "org.rogach" %%% "scallop" % "3.1.2",
+      "com.lihaoyi" %%% "utest" % "0.6.3" % Test,
     )
   )
+  .enablePlugins(BuildInfoPlugin)
+  .dependsOn(lib)
 
-lazy val libJVM = lib.jvm
-lazy val libJS = lib.js
+lazy val cliArgsJVM = cliArgs.jvm
+lazy val cliArgsNative = cliArgs.native
 
 lazy val espeak = project
   .in(file("espeak"))
   .settings(
-    target in nativeCompile := pluginPath.value,
-    target in javah := (sourceDirectory in nativeCompile).value / "include",
-    sourceDirectory in nativeCompile := sourceDirectory.value / "native"
+    moduleName := "accessible-scala-espeak",
   )
-  .enablePlugins(JniNative)
+  .settings(nativeSettings)
+  .enablePlugins(ScalaNativePlugin)
+
+lazy val lib = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .withoutSuffixFor(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .in(file("lib"))
+  .nativeSettings(nativeSettings)
+  .settings(
+    moduleName := "accessible-scala",
+    libraryDependencies += "org.scalameta" %%% "scalameta" % metaV
+  )
+
+lazy val libJVM = lib.jvm
+lazy val libJS = lib.js
+lazy val libNative = lib.native
 
 lazy val testsShared = project
   .in(file("tests/shared"))
@@ -63,16 +73,12 @@ lazy val testsShared = project
   )
   .dependsOn(libJVM)
 
-lazy val forkTest = Seq(
-  cancelable in Global := true,
-  Test / fork := true,
-  Test / javaOptions += libraryPath.value
-)
-
 lazy val unit = project
   .in(file("tests/unit"))
+  .settings(
+    libraryDependencies += "com.lihaoyi" %%% "fansi" % "0.2.5" % Test
+  )
   .dependsOn(testsShared)
-  .settings(forkTest)
 
 lazy val slow = project
   .in(file("tests/slow"))
@@ -93,7 +99,6 @@ lazy val slow = project
       )
     }
   )
-  .settings(forkTest)
   .dependsOn(testsShared)
 
 lazy val webpackDir = Def.setting { (sourceDirectory in ThisProject).value / "webpack" }
@@ -123,6 +128,7 @@ lazy val web = project
   .in(file("web"))
   .settings(scalajsSettings)
   .settings(
+    moduleName := "accessible-scala-demo",
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % "0.9.5"
     ),
@@ -229,6 +235,7 @@ lazy val vscode = project
   .in(file("vscode"))
   .settings(scalajsSettings)
   .settings(
+    moduleName := "accessible-scala-vscode",
     scalacOptions += "-P:scalajs:sjsDefinedByDefault",
     scalaJSModuleKind := ModuleKind.CommonJSModule,
     artifactPath in (Compile, fastOptJS) := baseDirectory.value / "out" / "extension.js",

@@ -19,7 +19,7 @@ def plugin_unloaded():
   if client:
     del client
 
-def runCommandRange(view, cmd):
+def runCommandRange(view, direction):
   file = view.file_name()
   is_scala = (
     (file and file.endswith(".scala"))
@@ -32,7 +32,7 @@ def runCommandRange(view, cmd):
       first = selections[0]
       start = str(first.begin())
       end = str(first.end())
-      client.sendCmdRange(cmd, start, end, file)
+      client.sendCmdRange(direction, start, end, file)
       client.setView(view)
 
 def runCommand(view, cmd):
@@ -52,7 +52,7 @@ def runCommand(view, cmd):
 
 class AscalaSummaryCommand(sublime_plugin.TextCommand):
   def run(self, edit):
-    runCommand(self.view, "summary-at")
+    runCommand(self.view, "summary")
 
 class AscalaDescribeCommand(sublime_plugin.TextCommand):
   def run(self, edit):
@@ -81,10 +81,7 @@ class AscalaDownCommand(sublime_plugin.TextCommand):
 class AccessibleScalaClient():
   def __init__(self):
     here = os.path.dirname(os.path.realpath(__file__))
-    options = "-Djava.library.path=" + os.environ['ESPEAK_LIB_PATH'] + ":" + here + "/bin"
-    cmd = ["java", options, "-jar", "ascala.jar"]
-
-    process = subprocess.Popen(cmd,
+    process = subprocess.Popen(["./accessible-scala", "--server"],
                                cwd=here,
                                universal_newlines=True,
                                bufsize=1,
@@ -108,19 +105,34 @@ class AccessibleScalaClient():
       self.view.run_command('accessible_scala_set_selection', {'start': start, 'end': end})
 
   def sendCmd(self, verb, start, file):
-    cmd = verb + " " + start + " " + file + "\n"
+    args = [
+      verb,
+      "--offset=" + start,
+      "--file=" + file,
+      "--output=voice"
+    ]
+    cmd = " ".join(args) + "\n"
     self.transport.send(cmd)
 
-  def sendCmdRange(self, verb, start, end, file):
-    cmd = verb + " " + start + " " + end + " " + file + "\n"
+  def sendCmdRange(self, direction, start, end, file):
+    args = [
+      "navigate",
+      "--start=" + start,
+      "--end=" + end,
+      "--direction=" + direction,
+      "--file=" + file,
+      "--output=voice"
+    ]
+    cmd = " ".join(args) + "\n"
     self.transport.send(cmd)
 
   def sendCmd2(self, verb, file):
-    cmd = verb + " " + file + "\n"
-    self.transport.send(cmd)
-
-  def sendCmd3(self, verb):
-    cmd = verb + "\n"
+    args = [
+      verb,
+      "--file=" + file,
+      "--output=voice"
+    ]
+    cmd = " ".join(args) + "\n"
     self.transport.send(cmd)
 
   def summary(self, file):
@@ -163,6 +175,7 @@ class StdioTransport():
       running = self.process.poll() is None
       try:
         content = stream.readline()
+        print(content)
         if content:
           self.on_receive(content)
 

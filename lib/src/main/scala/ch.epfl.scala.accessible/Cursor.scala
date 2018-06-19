@@ -7,11 +7,6 @@ object Cursor {
   def apply(tree: Tree): Cursor =
     Root(tree)
 
-  def apply(path: Path, range: Range): Cursor = {
-    val tree = parse(path)
-    apply(tree, range)
-  }
-
   def apply(tree: Tree, range: Range): Cursor = {
     buildCursor(Root(tree), tree => tree.pos.start <= range.start && range.end <= tree.pos.end)
   }

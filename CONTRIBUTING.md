@@ -22,13 +22,39 @@ install node and yarn
 
 install espeak or espeak-ng
 
-This plugin is not up-to-date compared to the web-demo or vscode.
+sbt cli/nativeLink
 
 ```bash
-# setup path to espeak lib
-export ESPEAK_LIB_PATH=/usr/lib/espeak
-
 pushd sublime-text
 ./install.sh
 popd
+```
+
+## Cli
+
+### General Options
+
+```
+-f, --file <arg>      read code from file path
+--stdin               read code from stdin (piped)
+--output [voice|text] output text to pipe to text-to-speech or voice to useespeak
+[summary|describe|breadcrumbs|navigate]
+```
+
+### Commands Options:
+
+```
+breadcrumbs:
+  --offset <arg>
+
+summary:
+  [--offset <arg>]
+
+describe:
+  [--offset <arg>]
+
+navigate
+  -d, --direction (up|down|left|right) where to navigate in the code ast
+  --start <arg>   selection start in offset
+  --end <arg>     selection end in offset
 ```

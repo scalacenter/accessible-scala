@@ -1,13 +1,8 @@
 package ch.epfl.scala.accessible
 
 import scala.meta._
-import java.nio.file.Path
 
 object Describe {
-
-  def apply(path: Path, offset: Offset): String =
-    apply(parse(path), offset)
-
   def apply(tree: Tree, offset: Offset): String =
     find(tree, offset) match {
       case Some(subtree) => describe(subtree)
@@ -21,6 +16,12 @@ object Describe {
     }
 
   def apply(tree: Tree): String = describe(tree)
+
+  def apply(tree: Tree, offset: Option[Offset]): String =
+    offset match {
+      case Some(of) => apply(tree, of)
+      case None     => apply(tree)
+    }
 
   private def describe(tree: Tree): String = describeTree(tree)
 

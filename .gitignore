@@ -2,9 +2,7 @@ target/
 bin/.coursier
 bin/.scalafmt*
 tests/slow/repos.tar.gz
-sublime-text/accessible-scala/ascala.jar
-sublime-text/accessible-scala/bin
-sublime-text/accessible-scala/build
+sublime-text/accessible-scala/accessible-scala
 vscode/out/extension.js
 vscode/out/extension.js.map
 node_modules
