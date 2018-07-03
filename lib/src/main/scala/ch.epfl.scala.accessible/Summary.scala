@@ -1,21 +1,11 @@
 package ch.epfl.scala.accessible
 
 import scala.meta._
-import java.nio.file.Path
 
 object Summary {
 
   def apply(tree: Tree): String =
     visitNames(tree, None)
-
-  def apply(path: Path): String =
-    apply(path, None)
-
-  def apply(path: Path, offset: Offset): String =
-    apply(path, Some(offset))
-
-  def apply(path: Path, offset: Option[Offset]): String =
-    apply(parse(path), offset)
 
   def apply(tree: Tree, offset: Offset): String =
     visitNames(tree, Some(offset))
