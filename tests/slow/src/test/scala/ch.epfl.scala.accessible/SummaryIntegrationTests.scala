@@ -6,11 +6,11 @@ import scala.meta.testkit.{Corpus, CorpusFile}
 import java.nio.file.Files
 import java.nio.charset.StandardCharsets
 
-import scala.meta.testkit.DiffAssertions
+import munit.Assertions.assertNoDiff
 
 import utest._
 
-object SummaryIntegrationTests extends TestSuite with DiffAssertions {
+object SummaryIntegrationTests extends TestSuite {
   val corpus = Corpus.files(Corpus.fastparse)
   val corpusByFile =
     corpus.toList

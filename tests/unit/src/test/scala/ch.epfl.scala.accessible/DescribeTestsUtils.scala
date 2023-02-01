@@ -1,11 +1,12 @@
 package ch.epfl.scala.accessible
 
 import scala.meta._
-import scala.meta.testkit.DiffAssertions
 import org.scalameta.logger
 import scala.meta.parsers.Parse
 
-trait DescribeTestsUtils extends FunSuite with DiffAssertions with MarkerTestUtils {
+import munit.Assertions.assertNoDiff
+
+trait DescribeTestsUtils extends FunSuite with MarkerTestUtils {
   val dotty = dialects.Dotty
 
   trait ExtractFrom[T] {

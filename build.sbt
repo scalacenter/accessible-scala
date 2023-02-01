@@ -1,13 +1,13 @@
 import sbtcrossproject.{crossProject, CrossType}
 import scala.sys.process._
 
-lazy val metaV = "4.0.0-M3"
+lazy val metaV = "4.7.3"
 lazy val pluginPath = Def.setting {
   (baseDirectory in ThisBuild).value / "sublime-text" / "accessible-scala"
 }
 
 lazy val nativeSettings = Seq(
-  scalaVersion := "2.11.12",
+  scalaVersion := "2.13.10",
   nativeGC := "immix"
 )
 
@@ -31,8 +31,8 @@ lazy val cliArgs = crossProject(JVMPlatform, NativePlatform)
     buildInfoKeys := Seq[BuildInfoKey](moduleName, version),
     buildInfoPackage := "build",
     libraryDependencies ++= Seq(
-      "org.rogach" %%% "scallop" % "3.1.2",
-      "com.lihaoyi" %%% "utest" % "0.6.3" % Test,
+      "org.rogach" %%% "scallop" % "4.1.0",
+      "com.lihaoyi" %%% "utest" % "0.8.1" % Test,
     )
   )
   .enablePlugins(BuildInfoPlugin)
@@ -67,7 +67,7 @@ lazy val testsShared = project
   .in(file("tests/shared"))
   .settings(
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %% "utest" % "0.6.3",
+      "com.lihaoyi" %% "utest" % "0.8.1",
       "org.scalameta" %% "testkit" % metaV
     )
   )
@@ -76,14 +76,14 @@ lazy val testsShared = project
 lazy val unit = project
   .in(file("tests/unit"))
   .settings(
-    libraryDependencies += "com.lihaoyi" %%% "fansi" % "0.2.5" % Test
+    libraryDependencies += "com.lihaoyi" %%% "fansi" % "0.4.0" % Test
   )
   .dependsOn(testsShared)
 
 lazy val slow = project
   .in(file("tests/slow"))
   .settings(
-    libraryDependencies += "me.tongfei" % "progressbar" % "0.5.5",
+    libraryDependencies += "me.tongfei" % "progressbar" % "0.9.5",
     javaOptions in (Test, test) ++= {
       val mem =
         if (sys.env.get("CI").isDefined) "4"
@@ -106,7 +106,6 @@ lazy val webpackDevConf = Def.setting { Some(webpackDir.value / "webpack-dev.con
 lazy val webpackProdConf = Def.setting { Some(webpackDir.value / "webpack-prod.config.js") }
 
 lazy val scalajsSettings = Seq(
-  scalacOptions += "-P:scalajs:sjsDefinedByDefault",
   useYarn := true,
   version in webpack := "3.5.5",
 )
@@ -130,7 +129,7 @@ lazy val web = project
   .settings(
     moduleName := "accessible-scala-demo",
     libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "0.9.5"
+      "org.scala-js" %%% "scalajs-dom" % "2.3.0"
     ),
     npmDependencies in Compile ++= Seq(
       "codemirror" -> "5.37.0",
@@ -236,8 +235,7 @@ lazy val vscode = project
   .settings(scalajsSettings)
   .settings(
     moduleName := "accessible-scala-vscode",
-    scalacOptions += "-P:scalajs:sjsDefinedByDefault",
-    scalaJSModuleKind := ModuleKind.CommonJSModule,
+    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
     artifactPath in (Compile, fastOptJS) := baseDirectory.value / "out" / "extension.js",
     artifactPath in (Compile, fullOptJS) := baseDirectory.value / "out" / "extension.js",
     open := openVSCodeTask.dependsOn(fastOptJS in Compile).value,

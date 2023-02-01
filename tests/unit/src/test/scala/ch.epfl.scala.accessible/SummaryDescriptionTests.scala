@@ -1,10 +1,10 @@
 package ch.epfl.scala.accessible
 
 import scala.meta._
-import scala.meta.testkit.DiffAssertions
+import munit.Assertions.assertNoDiff
 import org.scalameta.logger
 
-object SummaryDescriptionTests extends FunSuite with DiffAssertions {
+object SummaryDescriptionTests extends FunSuite {
   check(
     """|object A {
        |  val a = 1

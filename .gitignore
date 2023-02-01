@@ -6,3 +6,5 @@ sublime-text/accessible-scala/accessible-scala
 vscode/out/extension.js
 vscode/out/extension.js.map
 node_modules
+.bsp/
+.idea/

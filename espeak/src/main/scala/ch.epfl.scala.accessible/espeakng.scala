@@ -1,6 +1,6 @@
 package ch.epfl.scala.accessible
 
-import scala.scalanative.native._
+import scala.scalanative.unsafe._
 // import scala.scalanative.native.extern
 
 @link("espeak-ng")

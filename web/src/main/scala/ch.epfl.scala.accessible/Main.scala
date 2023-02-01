@@ -3,7 +3,7 @@ package ch.epfl.scala.accessible
 import org.scalajs.dom.{document, console, window}
 import org.scalajs.dom.raw.HTMLTextAreaElement
 import scala.scalajs.js
-import codemirror._
+import codemirror.{Range => _, _}
 import scala.meta._
 import scala.util.control.NonFatal
 
