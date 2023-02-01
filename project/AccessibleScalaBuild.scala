@@ -8,7 +8,7 @@ object AccessibleScalaBuild extends AutoPlugin {
   override def globalSettings: Seq[Def.Setting[_]] = List(
     organization := "ch.epfl.scala.accessible",
     version := "0.3.0",
-    scalaVersion := "2.12.6",
+    scalaVersion := "2.13.10",
     scalacOptions ++= Seq(
       "-Xlint",
       "-deprecation",
