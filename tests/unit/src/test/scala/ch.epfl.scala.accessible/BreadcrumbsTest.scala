@@ -1,10 +1,10 @@
 package ch.epfl.scala.accessible
 
 import scala.meta._
-import scala.meta.testkit.DiffAssertions
+import munit.Assertions.assertNoDiff
 import org.scalameta.logger
 
-object BreadcrumbsTests extends FunSuite with DiffAssertions {
+object BreadcrumbsTests extends FunSuite {
   check(
     """|package a
        |object b {

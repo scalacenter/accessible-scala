@@ -2,9 +2,9 @@ package ch.epfl.scala.accessible
 
 import utest._
 import scala.meta._
-import scala.meta.testkit.DiffAssertions
+import munit.Assertions.assertNoDiff
 
-object SummaryTests extends TestSuite with DiffAssertions {
+object SummaryTests extends TestSuite {
 
   val tests = Tests {
     "top level summary" - {

@@ -1,7 +1,8 @@
 package ch.epfl.scala.accessible
 
-import scalanative.native
-import scalanative.native._
+import scalanative.unsafe
+import scalanative.unsafe._
+import scalanative.unsigned._
 
 class Espeak() {
 
@@ -14,12 +15,12 @@ class Espeak() {
   def apply(text: String, synchronize: Boolean): Unit = {
     if (espeakng.isPlaying()) espeakng.cancel()
 
-    native.Zone { implicit z =>
+    unsafe.Zone { implicit z =>
       val textPtr = toCString(text)
       val uuid = stackalloc[CUnsignedInt]
       val result = espeakng.synth(
         text = textPtr,
-        size = text.size + 1,
+        size = (text.size + 1).toULong,
         position = 0.toUInt,
         positionType = PositionType.Character,
         endPosition = 0.toUInt,
